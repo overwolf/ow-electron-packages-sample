@@ -1,0 +1,81 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true,
+    "jest": true
+  },
+  "extends": [
+    "plugin:react/recommended",
+    "standard",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "eslint-config-overwolf-ts",
+    "plugin:react-hooks/recommended"
+  ],
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly"
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2018,
+    "sourceType": "module",
+    "project": "tsconfig.json"
+  },
+  "plugins": [
+    "react",
+    "@typescript-eslint"
+  ],
+  "rules": {
+    "@typescript-eslint/interface-name-prefix": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/type-annotation-spacing": "off",
+    "semi": [
+      "error",
+      "always"
+    ],
+    "quotes": [
+      "error",
+      "single"
+    ],
+    "no-unused-vars": "warn",
+    "space-before-function-paren": "off",
+    "object-curly-spacing": "off",
+    "padded-blocks": "off",
+    "indent": [
+      "warn",
+      2,
+      {
+        "FunctionDeclaration": {
+          "parameters": "first"
+        }
+      }
+    ],
+    "max-len": [
+      "error",
+      {
+        "code": 80,
+        "ignorePattern": "^import\\s.+\\sfrom\\s.+;$",
+        "ignoreUrls": true
+      }
+    ],
+    "no-prototype-builtins": "off",
+    "comma-dangle": "off",
+    "arrow-parens": [
+      "error",
+      "as-needed"
+    ],
+    "prefer-promise-reject-errors": "off",
+    "no-async-promise-executor": "off",
+    "react-hooks/rules-of-hooks": "error", // Checks rules of Hooks
+    "react-hooks/exhaustive-deps": "warn", // Checks effect dependencies
+    "react/prop-types": "off",
+    "radix": "off",
+    "one-var": "off"
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "name": "ow-electron-packages-sample",
+  "version": "22.3.13",
+  "description": "ow-electron package sample app",
+  "main": "dist/browser/index.js",
+  "author": {
+    "name": "overwolf",
+    "email": "overwolf@gmail.com"
+  },
+  "license": "MIT",
+  "overwolf": {
+    "packages": [
+      "gep",
+      "overlay"
+    ]
+  },
+  "build": {
+    "nodeGypRebuild": false,
+    "appId": "com.overwolf.packageSample",
+    "asar": true,
+    "overwolf": {
+      "disableAdOptimization": false
+    },
+    "productName": "owElectronpackageSample",
+    "directories": {
+      "output": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "*.js",
+      "*.html",
+      "*.exe"
+    ],
+    "copyright": "Copyright 2023 Overwolf Ltd.",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "publisherName": "Overwolf Ltd",
+      "legalTrademarks": "Copyright 2023 Overwolf Ltd."
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "scripts": {
+    "build:renderer": "webpack --config ./webpack.renderer.config.js",
+    "build:main": "webpack --config ./webpack.main.config.js",
+    "build": "yarn webpack --mode=development && yarn build:main && yarn build:renderer",
+    "build:dev": "yarn webpack --watch --mode=development",
+    "build:start": "yarn run build && ow-electron . ",
+    "start": "ow-electron .",
+    "build:ow-electron": "ow-electron-builder --c.extraMetadata.name=GameEventsTester --publish=never"
+  },
+  "dependencies": {
+    "force": "^0.0.3"
+  },
+  "devDependencies": {
+    "@overwolf/ow-electron-builder": "latest",
+    "@overwolf/ow-electron-packages-types": "latest",
+    "@overwolf/ow-electron": "beta",
+    "@types/jquery": "^3.5.16",
+    "@types/jsonwebtoken": "^9.0.1",
+    "@types/node": "^18.11.18",
+    "copy-webpack-plugin": "^11.0.0",
+    "electron": "21.1.0",
+    "html-webpack-plugin": "^5.5.0",
+    "jest": "^29.3.1",
+    "jest-environment-jsdom": "^29.3.1",
+    "jest-junit": "^15.0.0",
+    "jest-mock-extended": "^3.0.1",
+    "reflect-metadata": "^0.1.13",
+    "ts-jest": "^29.0.3",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.7.4",
+    "typescript-logging": "^2.0.2",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1",
+    "wrapper-webpack-plugin": "^2.1.0"
+  }
+}
