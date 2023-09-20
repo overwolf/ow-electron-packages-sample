@@ -85,3 +85,59 @@ function addMessageToTerminal(message) {
   terminal.append(message + '\n');
   terminal.scrollTop = terminal.scrollHeight;
 }
+
+export function sendExclusiveOptions() {
+  const color = (document.getElementById('colorPicker') as HTMLInputElement).value;
+
+  const r = parseInt(color.substr(1,2), 16);
+  const g = parseInt(color.substr(3,2), 16);
+  const b = parseInt(color.substr(5,2), 16);
+  const a = (document.getElementById('opacityRange') as HTMLInputElement).value;
+
+  const options = {
+     color: `rgba(${r},${g},${b},${a})`,
+     animationDuration:
+      parseInt((document.getElementById('animationDurationRange') as HTMLInputElement).value)
+  };
+
+  // @ts-ignore
+  window.overlay.updateExclusiveOptions(options);
+}
+
+
+
+const opacityRange = document.getElementById('opacityRange') as HTMLInputElement;
+opacityRange.addEventListener('change', (ev) => {
+  sendExclusiveOptions();
+})
+
+const animationDurationRange = document.getElementById('animationDurationRange') as HTMLInputElement;
+animationDurationRange.addEventListener('change', (ev) => {
+  sendExclusiveOptions();
+})
+
+const colorPicker = document.getElementById('colorPicker') as HTMLInputElement;
+colorPicker.addEventListener('change', (ev) => {
+  sendExclusiveOptions();
+})
+
+
+document.querySelectorAll('[name="behavior"]').forEach(
+  (radio)=>{radio.addEventListener('change',(a)=>{
+    const radio = a.target as HTMLInputElement;
+    if (radio.checked) {
+      // @ts-ignore
+      window.overlay.setExclusiveModeHotkeyBehavior(radio.value);
+    }
+  })
+})
+
+document.querySelectorAll('[name="exclusiveType"]').forEach(
+  (radio)=>{radio.addEventListener('change',(a)=>{
+    const radio = a.target as HTMLInputElement;
+    if (radio.checked) {
+      // @ts-ignore
+      window.overlay.setExclusiveModeType(radio.value);
+    }
+  })
+})

@@ -42,6 +42,18 @@ contextBridge.exposeInMainWorld('osr', {
   },
   updateHotkey: () => {
     return ipcRenderer.invoke('updateHotkey');
+  },
+});
+
+contextBridge.exposeInMainWorld('overlay', {
+  setExclusiveModeType: (mode) => {
+    return ipcRenderer.invoke('EXCLUSIVE_TYPE', mode);
+  },
+  setExclusiveModeHotkeyBehavior: (behavior) => {
+    return ipcRenderer.invoke('EXCLUSIVE_BEHAVIOR',behavior );
+  },
+  updateExclusiveOptions: (options) => {
+    return ipcRenderer.invoke('updateExclusiveOptions', options);
   }
 });
 

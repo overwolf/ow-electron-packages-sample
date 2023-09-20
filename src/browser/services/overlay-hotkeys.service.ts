@@ -1,6 +1,6 @@
 import { app } from "electron";
 import { overwolf } from '@overwolf/ow-electron'
-import { IOverwolfOverlayApi, PassthroughType, ZOrderType } from '@overwolf/ow-electron-packages-types';
+import { ExclusiveInputOptions, IOverwolfOverlayApi, PassthroughType, ZOrderType } from '@overwolf/ow-electron-packages-types';
 import EventEmitter from "events";
 import { OverlayService } from "./overlay.service";
 
@@ -41,18 +41,6 @@ export class OverlayHotkeysService extends EventEmitter {
    * Install Overlay hotkeys. must be call after 'overlay' package is ready
    */
   private installHotKeys() {
-    // blocked hotkey
-    this.overlayApi.hotkeys.register({
-      name: "CrlAndTabHotKey",
-      keyCode: 9, // TAB
-      modifiers: {
-        ctrl: true
-      },
-      passthrough: false
-
-    }, (hotkey, state) => {
-      this.log(`on hotkey '${hotkey.name}' `, state);
-    });
 
     // non blocked hot key
     this.overlayApi.hotkeys.register({
@@ -65,7 +53,7 @@ export class OverlayHotkeysService extends EventEmitter {
       this.log(`on hotkey '${hotkey.name}' `, state);
     })
 
-    // reset OSR passthrough 
+    // reset OSR passthrough
     this.overlayApi.hotkeys.register({
       name: "resetPassThrow",
       keyCode: 82, // r

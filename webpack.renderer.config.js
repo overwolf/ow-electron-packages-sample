@@ -8,6 +8,7 @@ rendererConfig.target = 'electron-renderer';
 rendererConfig.entry = {
   'renderer': './src/renderer/renderer.ts',
   'preload': './src/preload/preload.ts',
+  'exclusive': './src/renderer/exclusive.ts'
 };
 
 rendererConfig.plugins.push(new HtmlWebpackPlugin({
@@ -21,6 +22,13 @@ rendererConfig.plugins.push(new HtmlWebpackPlugin({
 rendererConfig.plugins.push(new HtmlWebpackPlugin({
   template: './src/renderer/osr.html',
   filename: path.join(__dirname, './dist/renderer/osr.html'),
+  inject: false
+}));
+
+rendererConfig.plugins.push(new HtmlWebpackPlugin({
+  template: './src/renderer/exclusive.html',
+  filename: path.join(__dirname, './dist/exclusive/exclusive.html'),
+  chunks: ['exclusive'],
   inject: false
 }));
 

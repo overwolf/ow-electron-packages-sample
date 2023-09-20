@@ -29,7 +29,8 @@ export class Application {
     // https://overwolf.github.io/api/electron/game-events/
     gepService.registerGames([
       kGepSupportedGameIds.TeamfightTactics,
-      //kGepSupportedGameIds.DiabloIV
+      //kGepSupportedGameIds.DiabloIV,
+      //kGepSupportedGameIds.RocketLeague,
     ]);
   }
 

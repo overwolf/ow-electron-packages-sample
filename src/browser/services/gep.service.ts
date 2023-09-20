@@ -55,13 +55,13 @@ export class GameEventsService extends EventEmitter {
    */
   private registerOverwolfPackageManager() {
     // Once a package is loaded
-    app.overwolf.packages.on('ready', (e, packageName) => {
+    app.overwolf.packages.on('ready', (e, packageName, version) => {
       // If this is the GEP package (packageName serves as a UID)
       if (packageName !== 'gep') {
         return;
       }
 
-      this.emit('log', 'gep package is ready');
+      this.emit('log', `gep package is ready: ${version}`);
 
       // Prepare for Game Event handling
       this.onGameEventsPackageReady();
@@ -85,7 +85,7 @@ export class GameEventsService extends EventEmitter {
     this.gepApi.removeAllListeners();
 
     // If a game is detected by the package
-    // To check if the game is running in elevated mode, use `gameInfo.isElevated`
+    // To check if the game is running in elevated mode, use `gameInfo.isElevate`
     this.gepApi.on('game-detected', (e, gameId, name, gameInfo) => {
       // If the game isn't in our tracking list
 

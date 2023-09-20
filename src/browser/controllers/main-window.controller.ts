@@ -5,6 +5,7 @@ import { DemoOSRWindowController } from './demo-osr-window.controller';
 import { OverlayService } from '../services/overlay.service';
 import { overwolf } from '@overwolf/ow-electron' // TODO: wil be @overwolf/ow-electron
 import { OverlayHotkeysService } from '../services/overlay-hotkeys.service';
+import { ExclusiveHotKeyMode, OverlayInputService } from '../services/overlay-input.service';
 
 const owElectronApp = electronApp as overwolf.OverwolfApp;
 
@@ -22,6 +23,7 @@ export class MainWindowController {
     private readonly overlayService: OverlayService,
     private readonly createDemoOsrWinController: () => DemoOSRWindowController,
     private readonly overlayHotkeysService: OverlayHotkeysService,
+    private readonly overlayInputService: OverlayInputService
   ) {
     this.registerToIpc();
 
@@ -68,8 +70,8 @@ export class MainWindowController {
    */
   public createAndShow(showDevTools: boolean) {
     this.browserWindow = new BrowserWindow({
-      width: 800,
-      height: 850,
+      width: 900,
+      height: 900,
       show: true,
       webPreferences: {
         // NOTE: nodeIntegration and contextIsolation are only required for this
@@ -110,6 +112,37 @@ export class MainWindowController {
     ipcMain.handle('updateHotkey', async () => {
       this.overlayHotkeysService?.updateHotkey();
     });
+
+    ipcMain.handle('updateExclusiveOptions', async (sender, options) => {
+      this.overlayInputService?.updateExclusiveModeOptions(options);
+    });
+
+    ipcMain.handle('EXCLUSIVE_TYPE', async (sender, type) => {
+      if (!this.overlayInputService) {
+        return;
+      }
+
+      if (type === 'customWindow') {
+        this.overlayInputService.exclusiveModeAsWindow = true;
+      } else {
+        // native
+        this.overlayInputService.exclusiveModeAsWindow = false;
+      }
+    });
+
+    ipcMain.handle('EXCLUSIVE_BEHAVIOR', async (sender, behavior) => {
+      if (!this.overlayInputService) {
+        return;
+      }
+
+      if (behavior === 'toggle') {
+        this.overlayInputService.mode = ExclusiveHotKeyMode.Toggle;
+      } else {
+        // native
+        this.overlayInputService.mode = ExclusiveHotKeyMode.AutoRelease;
+      }
+    });
+
   }
 
   /**

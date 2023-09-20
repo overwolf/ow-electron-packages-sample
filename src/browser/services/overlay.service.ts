@@ -54,21 +54,21 @@ export class OverlayService extends EventEmitter {
 
   //----------------------------------------------------------------------------
   private startOverlayWhenPackageReady() {
-    app.overwolf.packages.on('ready', (e, packageName) => {
+    app.overwolf.packages.on('ready', (e, packageName, version) => {
       if (packageName === 'overlay') {
-        this.startOverlay();
+        this.startOverlay(version);
       }
     });
   }
 
   //----------------------------------------------------------------------------
   // must be called after package is 'ready' (i.e loaded)
-  private startOverlay() {
+  private startOverlay(version: string) {
     if (!this.overlayApi) {
       throw new Error('Attempting to access overlay before available');
     }
 
-    this.log('overlay package is ready');
+    this.log(`overlay package is ready: ${version}`);
 
     this.registerOverlayEvents();
 
@@ -106,6 +106,14 @@ export class OverlayService extends EventEmitter {
 
     this.overlayApi.on('game-window-changed', (window, game, reason) => {
       this.log('game window info changed', reason, window);
+    });
+
+    this.overlayApi.on('game-input-interception-changed', (info) => {
+      this.log('overlay input interception changed', info);
+    });
+
+    this.overlayApi.on('game-input-exclusive-mode-changed', (info) => {
+      this.log('overlay input exclusive mode changed', info);
     });
   }
 
