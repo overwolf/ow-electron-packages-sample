@@ -59,9 +59,6 @@
     "start": "ow-electron .",
     "build:ow-electron": "ow-electron-builder --c.extraMetadata.name=GameEventsTester --publish=never"
   },
-  "dependencies": {
-    "force": "^0.0.3"
-  },
   "devDependencies": {
     "@overwolf/ow-electron": "latest",
     "@overwolf/ow-electron-builder": "latest",
