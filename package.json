@@ -62,7 +62,7 @@
   "devDependencies": {
     "@overwolf/ow-electron": "latest",
     "@overwolf/ow-electron-builder": "latest",
-    "@overwolf/ow-electron-packages-types": "latest",
+    "@overwolf/ow-electron-packages-types": "^0.0.5",
     "@types/jquery": "^3.5.16",
     "@types/jsonwebtoken": "^9.0.1",
     "@types/node": "^18.11.18",
