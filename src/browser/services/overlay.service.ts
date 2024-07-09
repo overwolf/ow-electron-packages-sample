@@ -88,8 +88,12 @@ export class OverlayService extends EventEmitter {
 
     this.overlayApi.on('game-launched', (event, gameInfo) => {
       this.log('game launched', gameInfo);
-
+ 
+      // pass the decision to the application 
       this.emit('injection-decision-handling', event, gameInfo);
+
+       // or just call
+       //event.inject();
     });
 
     this.overlayApi.on('game-injection-error', (gameInfo, error) => {
