@@ -108,6 +108,13 @@ export class GameEventsService extends EventEmitter {
       // setRequiredFeatures should be set
     });
 
+    // undocumented (will add it fir next version) event to track game-exit
+    // from the gep api
+    //@ts-ignore
+    this.gepApi.on('game-exit',(e, gameId, processName, pid) => {
+      console.log('gep game exit', gameId, processName, pid);
+    });
+
     // If a game is detected running in elevated mode
     // **Note** - This fires AFTER `game-detected`
     this.gepApi.on('elevated-privileges-required', (e, gameId, ...args) => {
