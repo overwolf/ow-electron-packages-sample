@@ -1,5 +1,5 @@
-import { app as electronApp } from 'electron';
-import { overwolf } from '@overwolf/ow-electron' // TODO: wil be @overwolf/ow-electron
+import { app as electronApp, ipcMain } from 'electron';
+import { overwolf } from '@overwolf/ow-electron';
 import EventEmitter from 'events';
 
 const app = electronApp as overwolf.OverwolfApp;
@@ -16,9 +16,9 @@ export class GameEventsService extends EventEmitter {
 
   constructor() {
     super();
+    this.registerIPC();
     this.registerOverwolfPackageManager();
   }
-
 
   /**
    *  for gep supported games goto:
@@ -33,10 +33,26 @@ export class GameEventsService extends EventEmitter {
    *
    */
   public async setRequiredFeaturesForAllSupportedGames() {
-    await Promise.all(this.gepGamesId.map(async (gameId) => {
+    await Promise.all(
+      this.gepGamesId.map(async (gameId) => {
+        try {
+          await this.gepApi.setRequiredFeatures(gameId, ['kill', 'death']);
+        } catch (error) {
+          this.emit('log', `error set-required-feature for: ${gameId}`);
+        }
+      }),
+    );
+
+    this.emit('log', `set-required-feature for games: ${this.gepGamesId.join(',')}`);
+  }
+
+  public async setRequiredFeaturesForGame(gameId: number, features: string[] = []) {
+    try {
       this.emit('log', `set-required-feature for: ${gameId}`);
-      await this.gepApi.setRequiredFeatures(gameId, null);
-    }));
+      await this.gepApi.setRequiredFeatures(gameId, features);
+    } catch (error) {
+
+    }
   }
 
   /**
@@ -101,6 +117,7 @@ export class GameEventsService extends EventEmitter {
       // }
 
       this.emit('log', 'gep: register game-detected', gameId, name, gameInfo);
+      this.emit('game-launch', gameId);
       e.enable();
       this.activeGame = gameId;
 
@@ -108,33 +125,23 @@ export class GameEventsService extends EventEmitter {
       // setRequiredFeatures should be set
     });
 
-    // undocumented (will add it fir next version) event to track game-exit
-    // from the gep api
-    //@ts-ignore
-    this.gepApi.on('game-exit',(e, gameId, processName, pid) => {
-      console.log('gep game exit', gameId, processName, pid);
-    });
-
     // If a game is detected running in elevated mode
     // **Note** - This fires AFTER `game-detected`
     this.gepApi.on('elevated-privileges-required', (e, gameId, ...args) => {
-      this.emit('log',
-        'elevated-privileges-required',
-        gameId,
-        ...args
-      );
+      this.emit('log', 'elevated-privileges-required', gameId, ...args);
 
       // TODO Handle case of Game running in elevated mode (meaning that the app also needs to run in elevated mode in order to detect events)
     });
 
     // When a new Info Update is fired
     this.gepApi.on('new-info-update', (e, gameId, ...args) => {
-      this.emit('log', 'info-update', gameId, ...args);
+      this.emit('gep-info', 'new-info', gameId, ...args);
     });
 
     // When a new Game Event is fired
     this.gepApi.on('new-game-event', (e, gameId, ...args) => {
       this.emit('log', 'new-event', gameId, ...args);
+      this.emit('gep-event', 'new-event', gameId, ...args);
     });
 
     // If GEP encounters an error
@@ -143,5 +150,19 @@ export class GameEventsService extends EventEmitter {
 
       this.activeGame = 0;
     });
+
+    await this.setRequiredFeaturesForAllSupportedGames();
+  }
+
+  private registerIPC() {
+    ipcMain.handle('gep-set-required-feature', async () => {
+      await this.setRequiredFeaturesForAllSupportedGames();
+      return true;
+    });
+
+    ipcMain.handle('gep-getInfo', async () => {
+      return await this.getInfoForActiveGame();
+    });
   }
 }
+

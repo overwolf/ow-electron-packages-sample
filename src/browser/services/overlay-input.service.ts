@@ -1,4 +1,4 @@
-import { app } from 'electron';
+import { app, ipcMain } from 'electron';
 import { OverlayService } from './overlay.service';
 import { overwolf } from '@overwolf/ow-electron';
 import {
@@ -33,6 +33,7 @@ export class OverlayInputService {
 
   constructor(overlayService: OverlayService) {
     overlayService.on('ready', this.init.bind(this));
+    this.registerIPC()
   }
 
   /**
@@ -119,7 +120,7 @@ export class OverlayInputService {
       options
     );
 
-    this.registerToIpc();
+    this.registerOverlayIpc();
 
     await this.exclusiveModeBackgroundWindow.window.loadURL(
       path.join(__dirname, '../exclusive/exclusive.html')
@@ -132,12 +133,13 @@ export class OverlayInputService {
     this.exclusiveModeBackgroundWindow.window.hide();
   }
 
-  private registerToIpc() {
+  private registerOverlayIpc() {
     const windowIpc = this.exclusiveModeBackgroundWindow.window.webContents.ipc;
 
     windowIpc.on('HIDE_EXCLUSIVE', (e) => {
       this.exclusiveModeBackgroundWindow.window.hide();
     });
+    
   }
 
   onGameExclusiveModeChanged(info: GameInputInterception) {
@@ -242,5 +244,32 @@ export class OverlayInputService {
 
   get overlayApi(): IOverwolfOverlayApi {
     return (owElectron.overwolf.packages as any).overlay as IOverwolfOverlayApi;
+  }
+
+  private registerIPC() {
+    ipcMain.handle('updateExclusiveOptions', async (sender, options) => {
+      this.updateExclusiveModeOptions(options);
+    });
+
+    ipcMain.handle('EXCLUSIVE_TYPE', async (sender, type) => {
+      if (type === 'customWindow') {
+        this.exclusiveModeAsWindow = true;
+        return;
+      }
+
+      // native
+      this.exclusiveModeAsWindow = false;
+    });
+
+    ipcMain.handle('EXCLUSIVE_BEHAVIOR', async (sender, behavior) => {
+
+      if (behavior === 'toggle') {
+        this.mode = ExclusiveHotKeyMode.Toggle;
+        return;
+      }
+
+      // native
+      this.mode = ExclusiveHotKeyMode.AutoRelease;
+    });
   }
 }

@@ -4,6 +4,7 @@ import { OverlayService } from './services/overlay.service';
 import { kGameIds } from "@overwolf/ow-electron-packages-types/game-list";
 import { kGepSupportedGameIds } from '@overwolf/ow-electron-packages-types/gep-supported-games';
 import { GameEventsService } from './services/gep.service';
+import { RecordingService } from './services/recording.service';
 
 export class Application {
   /**
@@ -12,6 +13,7 @@ export class Application {
   constructor(
     private readonly overlayService: OverlayService,
     private readonly gepService: GameEventsService,
+    private readonly recordingService: RecordingService,
     private readonly mainWindowController: MainWindowController) {
 
     overlayService.on('ready', this.onOverlayServiceReady.bind(this));
@@ -29,8 +31,15 @@ export class Application {
     // https://overwolf.github.io/api/electron/game-events/
     gepService.registerGames([
       kGepSupportedGameIds.TeamfightTactics,
-      //kGepSupportedGameIds.DiabloIV,
-      //kGepSupportedGameIds.RocketLeague,
+      kGameIds.DiabloIV,
+      kGameIds.RocketLeague,
+      kGameIds.PathofExile,
+      kGameIds.VALORANT,
+      kGameIds.Fortnite,
+      kGameIds.Minecraft,
+      kGameIds.LeagueofLegends,
+      kGameIds.Dota2,
+      kGameIds.CS2
     ]);
   }
 
@@ -55,10 +64,15 @@ export class Application {
   private onOverlayServiceReady() {
     // Which games to support overlay for
     this.overlayService.registerToGames([
-      kGameIds.LeagueofLegends,
-      kGameIds.TeamfightTactics,
+      kGepSupportedGameIds.TeamfightTactics,
+      kGameIds.DiabloIV,
       kGameIds.RocketLeague,
-      kGameIds.DiabloIV
+      kGameIds.PathofExile,
+      kGameIds.VALORANT,
+      kGameIds.Fortnite,
+      kGameIds.Minecraft,
+      kGameIds.LeagueofLegends,
+      kGameIds.Dota2,
     ]);
   }
 }

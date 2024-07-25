@@ -1,12 +1,12 @@
-import { app as electronApp } from "electron";
-import { overwolf } from '@overwolf/ow-electron' // TODO: wil be @overwolf/ow-electron
+import { app as electronApp, ipcMain } from 'electron';
+import { overwolf } from '@overwolf/ow-electron';
 import {
   IOverwolfOverlayApi,
   OverlayWindowOptions,
   OverlayBrowserWindow,
   GamesFilter,
 } from '@overwolf/ow-electron-packages-types';
-import EventEmitter from "events";
+import EventEmitter from 'events';
 
 const app = electronApp as overwolf.OverwolfApp;
 
@@ -21,8 +21,8 @@ export class OverlayService extends EventEmitter {
   constructor() {
     super();
     this.startOverlayWhenPackageReady();
+    this.registerIPC();
   }
-
 
   /**
    *
@@ -39,7 +39,7 @@ export class OverlayService extends EventEmitter {
    *
    */
   public async registerToGames(gameIds: number[]): Promise<void> {
-    await new Promise( resolve => setTimeout ( resolve , 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     this.log('registering to game ids:', gameIds);
 
@@ -75,7 +75,6 @@ export class OverlayService extends EventEmitter {
     this.emit('ready');
   }
 
-
   private registerOverlayEvents() {
     // prevent double events in case the package relaunch due crash
     // or update.
@@ -87,13 +86,9 @@ export class OverlayService extends EventEmitter {
     this.log('registering to overlay package events');
 
     this.overlayApi.on('game-launched', (event, gameInfo) => {
+      event.inject();
       this.log('game launched', gameInfo);
- 
-      // pass the decision to the application 
       this.emit('injection-decision-handling', event, gameInfo);
-
-       // or just call
-       //event.inject();
     });
 
     this.overlayApi.on('game-injection-error', (gameInfo, error) => {
@@ -119,6 +114,10 @@ export class OverlayService extends EventEmitter {
     this.overlayApi.on('game-input-exclusive-mode-changed', (info) => {
       this.log('overlay input exclusive mode changed', info);
     });
+
+    this.overlayApi.on('game-exit', (info) => {
+      this.emit('game-exit', info);
+    });
   }
 
   /** */
@@ -126,5 +125,13 @@ export class OverlayService extends EventEmitter {
     try {
       this.emit('log', message, ...args);
     } catch {}
+  }
+
+  private registerIPC() {
+    ipcMain.handle('toggleOSRVisibility', async () => {
+      this.overlayApi?.getAllWindows().forEach((e) => {
+        e.window.show();
+      });
+    });
   }
 }

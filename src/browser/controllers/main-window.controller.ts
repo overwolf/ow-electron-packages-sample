@@ -1,11 +1,18 @@
-import { app as electronApp, ipcMain, BrowserWindow } from 'electron';
+import { app as electronApp, ipcMain, BrowserWindow, dialog } from 'electron';
 import { GameEventsService } from '../services/gep.service';
 import path from 'path';
 import { DemoOSRWindowController } from './demo-osr-window.controller';
 import { OverlayService } from '../services/overlay.service';
-import { overwolf } from '@overwolf/ow-electron' // TODO: wil be @overwolf/ow-electron
+import { overwolf } from '@overwolf/ow-electron';
 import { OverlayHotkeysService } from '../services/overlay-hotkeys.service';
-import { ExclusiveHotKeyMode, OverlayInputService } from '../services/overlay-input.service';
+import { OverlayInputService } from '../services/overlay-input.service';
+import {
+  RecordingService,
+} from '../services/recording.service';
+import { RecordingStatus } from '../../common/recorder/recording-status';
+import { GameInfo, RecorderStats } from '@overwolf/ow-electron-packages-types';
+import { exec } from 'child_process';
+import { LolGameListener } from './lol-events-listener';
 
 const owElectronApp = electronApp as overwolf.OverwolfApp;
 
@@ -23,27 +30,12 @@ export class MainWindowController {
     private readonly overlayService: OverlayService,
     private readonly createDemoOsrWinController: () => DemoOSRWindowController,
     private readonly overlayHotkeysService: OverlayHotkeysService,
-    private readonly overlayInputService: OverlayInputService
+    private readonly overlayInputService: OverlayInputService,
+    private readonly recordingService: RecordingService,
+    private readonly lolListener: LolGameListener,
   ) {
     this.registerToIpc();
-
-    gepService.on('log', this.printLogMessage.bind(this));
-    overlayService.on('log', this.printLogMessage.bind(this));
-
-    overlayHotkeysService.on('log', this.printLogMessage.bind(this));
-
-    owElectronApp.overwolf.packages.on('crashed', (e, ...args) => {
-      this.printLogMessage('package crashed', ...args);
-      // ow-electron package manager crashed (will be auto relaunch)
-      // e.preventDefault();
-      // calling `e.preventDefault();` will stop the GEP Package from
-      // automatically re-launching
-    });
-
-    owElectronApp.overwolf.packages.on(
-      'failed-to-initialize',
-      this.logPackageManagerErrors.bind(this)
-    );
+    this.registerListeners();
   }
 
   /**
@@ -53,16 +45,47 @@ export class MainWindowController {
     if (this.browserWindow?.isDestroyed() ?? true) {
       return;
     }
+
     this.browserWindow?.webContents?.send('console-message', message, ...args);
   }
 
-  //----------------------------------------------------------------------------
-  private logPackageManagerErrors(e, packageName, ...args: any[]) {
-    this.printLogMessage(
-      'Overwolf Package Manager error!',
-      packageName,
-      ...args
+  private gepOnInfo(message: string, ...args: any[]) {
+    this.lolListener.onNewInfo(args[1]);
+  }
+
+  private gepOnEvent(message: string, ...args: any[]) {
+    this.lolListener.onNewEvent(args[1]);
+  }
+
+  private gepOnLaunch(gameId: number) {
+    this.lolListener.onGameLaunched(gameId);
+  }
+
+  private gepOnExit(info: GameInfo) {
+    this.lolListener.onGameExit(info.classId);
+  }
+
+  private onRecorderStatusChanged(status: RecordingStatus) {
+    this.browserWindow?.webContents?.send('recording-status-changed', status);
+  }
+
+  private onCaptureSettingsChanged() {
+    if (this.browserWindow?.isDestroyed() ?? true) {
+      return;
+    }
+
+    this.browserWindow?.webContents?.send(
+      'capture-settings-changed',
+      this.recordingService?.captureSettings,
     );
+  }
+
+  private onRecordingStats(statsInfo: RecorderStats) {
+    if (this.browserWindow?.isDestroyed() ?? true) {
+      return;
+    }
+
+    this.browserWindow?.webContents?.send('recording-stats', statsInfo);
   }
 
   /**
@@ -91,58 +114,78 @@ export class MainWindowController {
   /**
    *
    */
-  private registerToIpc() {
+  private async registerToIpc() {
     ipcMain.handle('createOSR', async () => await this.createOSRDemoWindow());
 
-    ipcMain.handle('gep-set-required-feature', async () => {
-      await this.gepService.setRequiredFeaturesForAllSupportedGames();
-      return true;
+    ipcMain.handle('open-folder-picker', async () => {
+      return dialog.showOpenDialog({
+        properties: ['openDirectory'],
+      });
     });
 
-    ipcMain.handle('gep-getInfo', async () => {
-      return await this.gepService.getInfoForActiveGame();
-    });
+    ipcMain.handle('open-folder', (...args) => {
+      try {
+        if (!args[1]) {
+          return false;
+        }
 
-    ipcMain.handle('toggleOSRVisibility', async () => {
-      this.overlayService?.overlayApi?.getAllWindows().forEach(e => {
-        e.window.show();
-      })
-    });
+        exec(`explorer.exe ${args[1]}`, (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Error: ${error.message}`);
+            return;
+          }
 
-    ipcMain.handle('updateHotkey', async () => {
-      this.overlayHotkeysService?.updateHotkey();
-    });
-
-    ipcMain.handle('updateExclusiveOptions', async (sender, options) => {
-      this.overlayInputService?.updateExclusiveModeOptions(options);
-    });
-
-    ipcMain.handle('EXCLUSIVE_TYPE', async (sender, type) => {
-      if (!this.overlayInputService) {
-        return;
-      }
-
-      if (type === 'customWindow') {
-        this.overlayInputService.exclusiveModeAsWindow = true;
-      } else {
-        // native
-        this.overlayInputService.exclusiveModeAsWindow = false;
+          if (stderr) {
+            console.error(`Stderr: ${stderr}`);
+            return;
+          }
+        });
+        return true;
+      } catch {
+        return false;
       }
     });
+  }
 
-    ipcMain.handle('EXCLUSIVE_BEHAVIOR', async (sender, behavior) => {
-      if (!this.overlayInputService) {
-        return;
-      }
+  private registerListeners() {
+    this.gepService.on('log', this.printLogMessage.bind(this));
+    this.gepService.on('gep-info', this.gepOnInfo.bind(this));
+    this.gepService.on('gep-event', this.gepOnEvent.bind(this));
+    this.gepService.on('game-launch', this.gepOnLaunch.bind(this));
+    this.overlayService.on('log', this.printLogMessage.bind(this));
+    this.overlayService.on('game-exit', this.gepOnExit.bind(this));
+    this.overlayHotkeysService.on('log', this.printLogMessage.bind(this));
+    this.recordingService.on('log', this.printLogMessage.bind(this));
+    this.recordingService.on('stats', this.onRecordingStats.bind(this));
+    this.recordingService.on(
+      'capture-settings-changed',
+      this.onCaptureSettingsChanged.bind(this),
+    );
 
-      if (behavior === 'toggle') {
-        this.overlayInputService.mode = ExclusiveHotKeyMode.Toggle;
-      } else {
-        // native
-        this.overlayInputService.mode = ExclusiveHotKeyMode.AutoRelease;
-      }
+    this.recordingService.on(
+      'recorder-status-changed',
+      this.onRecorderStatusChanged.bind(this),
+    );
+
+    owElectronApp.overwolf.packages.on('crashed', (e, ...args) => {
+      this.printLogMessage('package crashed', ...args);
     });
 
+    owElectronApp.overwolf.packages.on(
+      'failed-to-initialize',
+      this.logPackageManagerErrors.bind(this),
+    );
+  }
+
+  /**
+   *
+   */
+  private logPackageManagerErrors(e, packageName, ...args: any[]) {
+    this.printLogMessage(
+      'Overwolf Package Manager error!',
+      packageName,
+      ...args,
+    );
   }
 
   /**
@@ -159,3 +202,4 @@ export class MainWindowController {
     });
   }
 }
+

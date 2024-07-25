@@ -16,7 +16,6 @@
       "runtimeArgs": [
         ".",
         "--test-ad",
-        "--remote-debugging-port=9222"
       ],
       "outputCapture": "std",
       "windows": {

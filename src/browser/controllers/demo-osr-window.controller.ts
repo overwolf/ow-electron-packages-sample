@@ -21,8 +21,8 @@ export class DemoOSRWindowController {
    */
   constructor(private readonly overlayService: OverlayService) {
   }
-
   /**
+
    *
    */
   public async createAndShow(showDevTools: boolean) {
@@ -58,7 +58,7 @@ export class DemoOSRWindowController {
     this.registerToWindowEvents();
 
     await this.overlayWindow.window.loadURL(
-      path.join(__dirname, '../renderer/osr.html')
+      path.join(__dirname, '../renderer/osr/osr.html')
     );
 
     this.overlayWindow.window.show();

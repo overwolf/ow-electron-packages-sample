@@ -1,0 +1,169 @@
+<html>
+
+<head>
+    <style>
+        body {
+            background-color: rgba(43, 49, 49, 0.68);
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            color: aliceblue;
+            user-select: none;
+        }
+
+        h1 {
+            color: maroon;
+            margin-left: 40px;
+        }
+
+
+        #title-bar {
+            height: 30px;
+            background-color: #333;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+
+        #title-bar .title {
+            font-size: 14px;
+            user-select: none;
+		    -webkit-app-region: drag;
+            user-select: none;
+            cursor: move;
+            width: 90%;
+        }
+
+        #title-bar .buttons {
+            display: flex;
+        }
+
+        #title-bar .button {
+            width: 15px;
+            height: 15px;
+            margin: 0 3px;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        #title-bar .button:hover {
+          background-color: #ddd;
+        }
+
+    </style>
+    <title>OsrWindow</title>
+</head>
+
+<body>
+    <div id="title-bar">
+        <div class="title">Drag area</div>
+        <div class="buttons">
+            <div class="button" id="minimize">&#x2013;</div>
+            <div class="button" id="close">&#x2715;</div>
+        </div>
+    </div>
+    <div>
+        <br>
+        <button id="resize">random resize</button>
+        <button id="move">random move</button>
+        <button id="devtools">Devtool</button>
+        <br> <br>
+        <div>
+            <label id="label"></label>
+            <input type="text"></input>
+        </div>
+        <br>
+        <fieldset>
+            <legend>Input passthrough:</legend>
+            <div id="passthrough">
+                <input type="radio" id="default" name="passthrough" value="0" checked="checked"> Default
+                <input type="radio" id="passthrough" name="passthrough" value="1"> Passthrough
+                <!-- <input type="radio" id="passthroughAndNotif" name="passthrough" value="2" >Pass throw and notif -->
+                <input type="submit" id="passThrowButton" value="set">
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>Z order:</legend>
+            <div id="zorder">
+                <input type="radio" id="default" name="zorder" value="0" checked="checked"> Default
+                <input type="radio" id="topMost" name="zorder" value="1"> Top most
+                <input type="radio" id="bottomMost" name="zorder" value="2"> Bottom most
+                <!-- <input type="radio" id="passthroughAndNotif" name="passthrough" value="2" >Pass throw and notif -->
+                <input type="submit" id="zorderButton" value="set">
+            </div>
+        </fieldset>
+        <hr />
+        <fieldset>
+            <legend>owAd</legend>
+            <!-- <button id="start-ad-button" onclick="startAd()">StartAd</button>
+            <button id="remove-ad-button" onclick="removeAd()">RemoveAd</button> -->
+            <div id="ad-container" style="
+      width: 400px;
+      height: 300px;
+      border: 1px solid;
+      background: transparent;
+      ">
+                <owadview style='width: 400px;height: 300px;'></owadview>
+            </div>
+        </fieldset>
+    </div>
+    <script>
+        const label = document.getElementById('label');
+        label.innerText = (new Date().toLocaleTimeString()).toString()
+        setInterval(() => {
+            label.innerText = (new Date().toLocaleTimeString()).toString();
+        }, 1000)
+
+        const {
+            ipcRenderer,
+        } = window.require('electron')
+
+        const buttonResize = document.getElementById('resize')
+        buttonResize.addEventListener('click', () => {
+            console.log('resize click ', (new Date()).toString())
+            ipcRenderer.send('resizeOsrClick')
+        })
+
+        const buttonMove = document.getElementById('move')
+        buttonMove.addEventListener('click', () => {
+            console.log('move click ', (new Date()).toString())
+            ipcRenderer.send('moveOsrClick');
+        })
+
+        const close = document.getElementById("close")
+        close.addEventListener("click", () => {
+            window.close();
+        })
+
+        const zOrderButton = document.getElementById("zorderButton")
+        zOrderButton.addEventListener("click", () => {
+            ipcRenderer.send('setZorder',
+                document.querySelector('input[name="zorder"]:checked').value);
+        })
+
+        const passThrowButton = document.getElementById("passThrowButton")
+        passThrowButton.addEventListener("click", () => {
+            ipcRenderer.send('setPassthrough',
+                document.querySelector('input[name="passthrough"]:checked').value);
+        })
+
+        const devtoolsButton = document.getElementById("devtools")
+        devtoolsButton.addEventListener("click", () => {
+            ipcRenderer.send('devtools');
+        })
+
+        window.onfocus = function () {
+            console.log("focus")
+        }
+        window.onblur = function () {
+            console.log("blur")
+        }
+    </script>
+</body>
+
+</html>

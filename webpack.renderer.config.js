@@ -6,30 +6,29 @@ const path = require('path');
 const rendererConfig = { ...config };
 rendererConfig.target = 'electron-renderer';
 rendererConfig.entry = {
-  'renderer': './src/renderer/renderer.ts',
+  'renderer': './src/renderer/app/index.tsx',
   'preload': './src/preload/preload.ts',
-  'exclusive': './src/renderer/exclusive.ts'
+  'exclusive': './src/renderer/exclusive/exclusive.ts'
 };
+
+rendererConfig.plugins.push(new HtmlWebpackPlugin({
+  template: './src/renderer/osr/osr.html',
+  filename: path.join(__dirname, './dist/renderer/osr/osr.html'),
+  inject: false
+}));
+
+rendererConfig.plugins.push(new HtmlWebpackPlugin({
+  template: './src/renderer/exclusive/exclusive.html',
+  filename: path.join(__dirname, './dist/exclusive/exclusive.html'),
+  chunks: ['exclusive'],
+  inject: false
+}));
 
 rendererConfig.plugins.push(new HtmlWebpackPlugin({
   template: './src/renderer/index.html',
   filename: path.join(__dirname, './dist/renderer/index.html'),
   chunks: ['renderer'],
-  publicPath: '',
-  inject: false
-}));
-
-rendererConfig.plugins.push(new HtmlWebpackPlugin({
-  template: './src/renderer/osr.html',
-  filename: path.join(__dirname, './dist/renderer/osr.html'),
-  inject: false
-}));
-
-rendererConfig.plugins.push(new HtmlWebpackPlugin({
-  template: './src/renderer/exclusive.html',
-  filename: path.join(__dirname, './dist/exclusive/exclusive.html'),
-  chunks: ['exclusive'],
-  inject: false
+  inject: true,
 }));
 
 module.exports = rendererConfig;

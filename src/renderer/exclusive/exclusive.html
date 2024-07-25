@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>exclusive mode</title>
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+  <!-- <script src="jquery-1.10.2.min.js"></script> -->
+  <!-- <script src="main.js"></script> -->
+  <script defer src="exclusive.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-weight: normal;
+    }
+
+    a:link,
+    a:visited,
+    a:hover,
+    a:focus,
+    a:active {
+      text-decoration: none;
+    }
+
+    button {
+      border: none;
+      font-family: inherit;
+      background-color: inherit;
+    }
+
+    button:focus {
+      outline: none;
+    }
+
+    img {
+      max-width: 100%;
+    }
+
+    video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hide {
+      display: none !important;
+    }
+
+    html,
+    body {
+      height: 100%;
+      cursor: default;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'KlavikaWebBasicRegular', sans-serif;
+      font-family: 'nice ampersand', 'KlavikaWebBasicLight', sans-serif;
+      font-size: 16px;
+    }
+
+    button,
+    i {
+      position: relative;
+      width: var(--size, 30px);
+      height: var(--size, 30px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      cursor: default;
+      transition: 0.15s;
+    }
+
+    button svg,
+    i svg {
+      width: 100%;
+      height: 100%;
+      flex: 0 0 auto;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .svg-icon-fill {
+      fill: currentcolor;
+    }
+
+    .svg-icon-stroke {
+      fill: none;
+      stroke: currentcolor;
+    }
+
+    .window-control {
+      position: fixed;
+      top: 0;
+      right: 0;
+      opacity: .1;
+      color: #828282;
+      background-color: transparent;
+    }
+
+    .window-control:hover {
+      color: #4f4f4f;
+      background-color: #dedede;
+    }
+
+    .btn {
+      flex-shrink: 0;
+      position: relative;
+      font-size: 15px;
+      white-space: nowrap;
+      padding: 0 10px;
+      width: auto;
+      min-width: 120px;
+      height: 30px;
+      color: white;
+      background-color: #c21913;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.15s;
+      cursor: default;
+      -webkit-user-select: none;
+    }
+
+    .btn:hover,
+    .btn:active {
+      background-color: red;
+    }
+
+    .btn-frame {
+      color: #131313;
+      background-color: transparent;
+      border: 1px solid #b6b6b6;
+    }
+
+    .btn-frame:hover {
+      color: #131313;
+      background-color: white;
+    }
+
+    .demo-btn {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      opacity: .2;
+      transition: .15s;
+    }
+
+    .demo-btn:hover {
+      opacity: .6;
+    }
+
+    .demo-btn button {
+      color: white;
+      background-color: black;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .demo-btn button:hover {
+      background-color: red;
+    }
+
+    .demo-btn button.active {
+      background-color: red;
+    }
+
+    body {
+  color: #dedede;
+  background-color: #131313;
+  display: flex;
+  flex-direction: column;
+  align-items: center; }
+
+.overlay {
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  color: rgba(0, 0, 0, 0.8);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 20%, rgba(0, 0, 0, 0.1) 40%, rgba(0, 0, 0, 0.1) 60%, rgba(0, 0, 0, 0.8) 80%); }
+
+.notification {
+  --border-color: #333333;
+  --background-color: #131313;
+  --corner: 20px;
+  --stroke: 1px;
+  --inner-corner: calc(var(--corner) - (0.58578643762 * var(--stroke)));
+  position: relative;
+  pointer-events: none;
+  padding: 20px;
+  min-width: 600px;
+  display: flex; }
+  .notification:before, .notification:after {
+    content: "";
+    position: absolute; }
+
+.notification:before {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-color: var(--border-color);
+  flex-shrink: 0;
+  clip-path: polygon(var(--corner) 0, 100% 0, 100% calc(100% - var(--corner)), calc(100% - var(--corner)) 100%, 0 100%, 0 var(--corner));
+  transition: 0.15s;
+  z-index: -1; }
+
+.notification:after {
+  top: var(--stroke);
+  left: var(--stroke);
+  bottom: var(--stroke);
+  right: var(--stroke);
+  background-color: var(--background-color);
+  clip-path: polygon(var(--inner-corner) 0, 100% 0, 100% calc(100% - var(--inner-corner)), calc(100% - var(--inner-corner)) 100%, 0 100%, 0 var(--inner-corner));
+  z-index: -1; }
+
+.logo {
+  --size: 40px;
+  margin-right: 20px; }
+
+.notification-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: auto;
+  padding-right: 60px; }
+
+h1 {
+  font-size: 18px; }
+
+p {
+  font-family: "KlavikaWebBasicRegular";
+  font-size: 14px;
+  color: #6c6c6c; }
+
+h1 + p {
+  margin-left: 10px; }
+
+.hotkey {
+  font-family: 'KlavikaWebBasicRegular', sans-serif;
+  position: relative;
+  font-size: 15px;
+  height: 30px;
+  border: 1px solid currentcolor;
+  min-width: 30px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center; }
+
+.hotkey + h1 {
+  margin-left: 15px; }
+
+.hotkey + .hotkey {
+  margin-left: 30px; }
+  .hotkey + .hotkey:before {
+    content: "";
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%' viewBox='0 0 30 30'><rect x='14' y='10' width='2' height='10'/><rect x='10' y='14' width='10' height='2' /></svg>");
+    background-color: #dedede;
+    left: -31px;
+    top: -1px;
+    bottom: -1px; }
+
+.overlay {
+  opacity: 0;
+  transition: 0.1s; }
+
+.notification {
+  transform: translateY(-100%);
+  transition: 0s; }
+
+body.active .overlay {
+  opacity: 1;
+  transition: 0.25s; }
+
+body.active .notification {
+  margin-top: 20px;
+  transform: translateY(0);
+  transition: 0.25s; }
+
+  </style>
+</head>
+
+<body style="margin:0;padding:0;background:transparent;">
+
+  <div class="overlay"></div>
+
+  <div class="notification">
+    <!-- <i class="logo">
+			<svg class="svg-icon-fill">
+				<use xlink:href="assets/svg/sprite.svg#logo" />
+			</svg>
+		</i> -->
+
+    <div class="notification-text notification-text-dock hide">
+      <span class="hotkey">Ctrl</span>
+      <span class="hotkey">Tab</span>
+      <h1>to return to the game</h1>
+    </div>
+  </div>
+
+</body>
+
+</html>
