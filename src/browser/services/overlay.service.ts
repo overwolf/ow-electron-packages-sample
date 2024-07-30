@@ -96,6 +96,11 @@ export class OverlayService extends EventEmitter {
     this.overlayApi.on('game-launched', (event, gameInfo) => {
       this.log('game launched', gameInfo);
 
+      if (gameInfo.processInfo.isElevated) {
+        // ToDo: emit to log and notify user- we can't inject to elevated games
+        // if the application is not eleveted.
+        return;
+      }
       // pass the decision to the application
       this.emit('injection-decision-handling', event, gameInfo);
 
