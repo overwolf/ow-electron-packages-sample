@@ -1,17 +1,23 @@
-import { app as electronApp } from "electron";
-import { overwolf } from '@overwolf/ow-electron' // TODO: wil be @overwolf/ow-electron
+import { app as electronApp } from 'electron';
+import { overwolf } from '@overwolf/ow-electron'; // TODO: wil be @overwolf/ow-electron
 import {
   IOverwolfOverlayApi,
   OverlayWindowOptions,
   OverlayBrowserWindow,
   GamesFilter,
 } from '@overwolf/ow-electron-packages-types';
-import EventEmitter from "events";
+import EventEmitter from 'events';
 
 const app = electronApp as overwolf.OverwolfApp;
 
 export class OverlayService extends EventEmitter {
+  private isOverlayReady = false;
+
   public get overlayApi(): IOverwolfOverlayApi {
+    // Do not let the application access the overlay before it is ready
+    if (!this.isOverlayReady) {
+      return null;
+    }
     return (app.overwolf.packages as any).overlay as IOverwolfOverlayApi;
   }
 
@@ -23,12 +29,11 @@ export class OverlayService extends EventEmitter {
     this.startOverlayWhenPackageReady();
   }
 
-
   /**
    *
    */
   public async createNewOsrWindow(
-    options: OverlayWindowOptions,
+    options: OverlayWindowOptions
   ): Promise<OverlayBrowserWindow> {
     const overlay = await this.overlayApi.createWindow(options);
     return overlay;
@@ -39,7 +44,7 @@ export class OverlayService extends EventEmitter {
    *
    */
   public async registerToGames(gameIds: number[]): Promise<void> {
-    await new Promise( resolve => setTimeout ( resolve , 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     this.log('registering to game ids:', gameIds);
 
@@ -55,9 +60,12 @@ export class OverlayService extends EventEmitter {
   //----------------------------------------------------------------------------
   private startOverlayWhenPackageReady() {
     app.overwolf.packages.on('ready', (e, packageName, version) => {
-      if (packageName === 'overlay') {
-        this.startOverlay(version);
+      if (packageName !== 'overlay') {
+        return;
       }
+
+      this.isOverlayReady = true;
+      this.startOverlay(version);
     });
   }
 
@@ -75,7 +83,6 @@ export class OverlayService extends EventEmitter {
     this.emit('ready');
   }
 
-
   private registerOverlayEvents() {
     // prevent double events in case the package relaunch due crash
     // or update.
@@ -88,12 +95,12 @@ export class OverlayService extends EventEmitter {
 
     this.overlayApi.on('game-launched', (event, gameInfo) => {
       this.log('game launched', gameInfo);
- 
-      // pass the decision to the application 
+
+      // pass the decision to the application
       this.emit('injection-decision-handling', event, gameInfo);
 
-       // or just call
-       //event.inject();
+      // or just call
+      //event.inject();
     });
 
     this.overlayApi.on('game-injection-error', (gameInfo, error) => {
