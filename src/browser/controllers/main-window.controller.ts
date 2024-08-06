@@ -3,7 +3,7 @@ import { GameEventsService } from '../services/gep.service';
 import path from 'path';
 import { DemoOSRWindowController } from './demo-osr-window.controller';
 import { OverlayService } from '../services/overlay.service';
-import { overwolf } from '@overwolf/ow-electron' // TODO: wil be @overwolf/ow-electron
+import { overwolf } from '@overwolf/ow-electron';
 import { OverlayHotkeysService } from '../services/overlay-hotkeys.service';
 import { ExclusiveHotKeyMode, OverlayInputService } from '../services/overlay-input.service';
 
