@@ -54,9 +54,15 @@ In order to add more/remove certain ow-electron "packages" from the project, sim
   "overwolf": {
     "packages": [
       "gep",
-      "overlay"
+      "overlay",
+      "recorder"
     ]
   },
   ...
 }
 ```
+
+### Available packages detailed information
+* [Recorder](./docs/recorder/recorder.md)
+* [Game Events Provider](./docs/gep/game-events-provider.md)
+* [Overlay](./docs//overlay/overlay.md)

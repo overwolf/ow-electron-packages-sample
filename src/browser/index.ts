@@ -1,36 +1,48 @@
-import {app as ElectronApp } from 'electron';
-import { Application } from "./application";
-import { OverlayHotkeysService } from './services/overlay-hotkeys.service';
-import { OverlayService } from './services/overlay.service';
-import { GameEventsService } from './services/gep.service';
+import { app as ElectronApp } from 'electron';
+import { Application } from './application';
+// import { GameEventsService } from './services/gep/game-events.service';
 import { MainWindowController } from './controllers/main-window.controller';
-import { DemoOSRWindowController } from './controllers/demo-osr-window.controller';
-import { OverlayInputService } from './services/overlay-input.service';
-
+import { RecordingController } from './controllers/recorder/recording.controller';
+// import { LolGameListener } from './controllers/lol-events-listener';
+import { UtilityService } from './services/utility.service';
+import { OverlayController } from './controllers/overlay/overlay.controller';
+import { GameEventsController } from './controllers/gep/game-events.controller';
 /**
  * TODO: Integrate your own dependency-injection library
  */
 const bootstrap = (): Application => {
-  const overlayService = new OverlayService();
-  const overlayHotkeysService = new OverlayHotkeysService(overlayService);
-  const gepService = new GameEventsService();
-  const inputService = new OverlayInputService(overlayService);
-
-  const createDemoOsrWindowControllerFactory = (): DemoOSRWindowController => {
-    const controller = new DemoOSRWindowController(overlayService);
-    return controller;
-  }
+  const recordingController = new RecordingController();
+  const overlayController = new OverlayController();
+  const gepController = new GameEventsController();
+  // const gepService = gepController.service;
+  const utilityService = new UtilityService();
+  // const lolListener = new LolGameListener(recordingService, gepService);
 
   const mainWindowController = new MainWindowController(
-    gepService,
-    overlayService,
-    createDemoOsrWindowControllerFactory,
-    overlayHotkeysService,
-    inputService
+    // gepService,
+    gepController,
+    overlayController,
+    utilityService,
+    recordingController,
+    // lolListener,
   );
 
-  return new Application(overlayService, gepService, mainWindowController);
-}
+  //-----------------------------------QA---------------------------------------
+  // uncomment this line to disable ads optimization
+  // ElectronApp.overwolf.disableAdsOptimization();
+
+  // uncomment this line to disable anonymous analytics
+  // ElectronApp.overwolf.disableAnonymousAnalytics();
+  //-----------------------------------QA---------------------------------------
+
+  return new Application(
+    overlayController,
+    gepController,
+    recordingController,
+    utilityService,
+    mainWindowController,
+  );
+};
 
 const app = bootstrap();
 
@@ -43,3 +55,12 @@ ElectronApp.on('window-all-closed', () => {
     ElectronApp.quit();
   }
 });
+
+//-----------------------------------QA-----------------------------------------
+// For "Electron App can launch a window with a timeout function"
+// ElectronApp.whenReady().then(async () => {
+//   setTimeout(() => {
+//     app.run();
+//   }, 10000);
+// });
+//-----------------------------------QA-----------------------------------------

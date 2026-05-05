@@ -16,7 +16,10 @@
       "runtimeArgs": [
         ".",
         "--test-ad",
-        "--remote-debugging-port=9222"
+        // package DEV env
+        // "--owepm-packages-url=https://electronapi-qa.overwolf.com/packages",
+        "--remote-debugging-port=9222",
+        "--remote-allow-origins=*",
       ],
       "outputCapture": "std",
       "windows": {
