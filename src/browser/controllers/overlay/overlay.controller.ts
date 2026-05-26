@@ -20,6 +20,8 @@ export class OverlayController extends PackageControllerBase {
   private _ingameWindowsController: IngameWindowsController;
   private _exclusiveModeWindowController: ExclusiveModeWindowController;
   private _initializedControllers: boolean = false;
+  // Tracks whether we've already emitted the screen for the current game session
+  private _gameScreenDetected: boolean = false;
   /**
    * Constructor for the OverlayController.
    * @param overlayService - The service responsible for managing overlay windows.
@@ -109,6 +111,13 @@ export class OverlayController extends PackageControllerBase {
     this._overlayApi.on('game-injected', async (gameInfo) => {
       this.log('Game Injected', gameInfo);
 
+      // Emit the game's display as soon as we have it after injection
+      const activeInfo = this._overlayApi.getActiveGameInfo();
+      if (!this._gameScreenDetected && activeInfo?.gameWindowInfo?.screen) {
+        this._gameScreenDetected = true;
+        this.emit('game-screen-detected', activeInfo.gameWindowInfo.screen);
+      }
+
       // Create an in-game window as an example
       try {
         //don't create in-game window for 109021 (LoL Launcher)
@@ -126,6 +135,13 @@ export class OverlayController extends PackageControllerBase {
 
     this._overlayApi.on('game-window-changed', (window, game, reason) => {
       this.log('Game Window Changed', reason, window, game);
+
+      // Fallback: emit game screen from the first window-changed event if
+      // getActiveGameInfo() didn't have screen info yet at injection time.
+      if (!this._gameScreenDetected && window.screen) {
+        this._gameScreenDetected = true;
+        this.emit('game-screen-detected', window.screen);
+      }
 
       // Update exclusive mode window size if needed
       this._exclusiveModeWindowController.onGameWindowChanged();
@@ -153,6 +169,7 @@ export class OverlayController extends PackageControllerBase {
 
     this._overlayApi.on('game-exit', (info) => {
       this.log('Game Exit', info);
+      this._gameScreenDetected = false;
       this.emit('game-exit', info);
 
       // Close all in-game windows

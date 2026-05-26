@@ -6,6 +6,7 @@ import SectionHeader from '../layout/section-header';
 import HotKeysSettings from '../hotkeys/hotkeys-settings';
 import CheckForUpdates from '../check-for-updates/CheckForUpdates';
 import AppContext from '../../context/app-context';
+import DisplaySettings from './display-settings';
 
 const AppSettings: React.FC = () => {
   const { availablePackages } = useContext(AppContext);
@@ -37,6 +38,12 @@ const AppSettings: React.FC = () => {
       description: 'Overlay, in-game overlay, video',
       content: <HotKeysSettings />,
       isDisabled: !availablePackages.isPackageAvailable('overlay'),
+    },
+    {
+      type: 'expanded-type',
+      title: 'Display Settings',
+      description: 'Detect connected displays, resolutions, and scaling',
+      content: <DisplaySettings />,
     },
     {
       type: 'simple-type',

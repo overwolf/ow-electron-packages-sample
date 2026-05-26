@@ -47,6 +47,12 @@ contextBridge.exposeInMainWorld('app', {
   checkForUpdates: () => {
     return ipcRenderer.invoke('check-for-updates');
   },
+  getDisplays: () => {
+    return ipcRenderer.invoke('get-displays');
+  },
+  setWindowDisplay: (displayId: number) => {
+    return ipcRenderer.invoke('set-window-display', displayId);
+  },
 });
 
 contextBridge.exposeInMainWorld('privacyApi', {

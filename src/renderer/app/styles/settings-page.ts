@@ -98,8 +98,34 @@ const settingsPageStyles = `
     }
   }
 
-  .overlay-settings, .hotkeys-settings {
+  .overlay-settings, .hotkeys-settings, .display-settings {
     padding: var(--space-600);
+  }
+
+  .display-settings {
+    select {
+      min-width: 320px;
+    }
+
+    .display-info-grid {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 6px 24px;
+      margin: 16px 0 0;
+      padding: 16px;
+      background-color: var(--color-surface-primary);
+      border-radius: 4px;
+
+      dt {
+        color: var(--color-text-tertiary);
+        font-size: var(--font-size-350);
+      }
+
+      dd {
+        font-size: var(--font-size-350);
+        margin: 0;
+      }
+    }
   }
 
   .settings-title {
