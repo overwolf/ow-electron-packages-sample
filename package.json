@@ -54,7 +54,7 @@
     "build": "yarn webpack --mode=development && yarn build:main && yarn build:renderer",
     "build:dev": "yarn webpack --watch --mode=development",
     "build:start": "yarn run build && ow-electron . ",
-    "start-ad": "ow-electron --test-ad." ,
+    "start-ad": "ow-electron --test-ad ." ,
     "build:ow-electron": "ow-electron-builder --c.extraMetadata.name='overwolf-official-sample-app' --publish=never"
   },
   "devDependencies": {
