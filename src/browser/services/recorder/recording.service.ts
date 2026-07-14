@@ -1,5 +1,4 @@
 import { app as electronApp } from 'electron';
-import { overwolf } from '@overwolf/ow-electron';
 import {
   ActiveReplay,
   IOverwolfRecordingApi,
@@ -18,7 +17,7 @@ import path from 'path';
 import { IRecorderInformation } from '../../../common/recorder/recorder-information';
 import { PackageServiceBase } from '../base.service';
 import { kGameIds } from '@overwolf/ow-electron-packages-types/game-list';
-import { LolGameListener } from './lol-events-listener';
+import { ReplayGameEventsListener } from './replay-game-events-listener';
 import { AudioTracksEnum } from '../../../common/recorder/audio-trackes-enum';
 const app = electronApp as overwolf.OverwolfApp;
 
@@ -26,9 +25,13 @@ const app = electronApp as overwolf.OverwolfApp;
  * Recording service
  */
 export class RecordingService extends PackageServiceBase {
+  private static readonly replayAutoCaptureGameIds = [
+    kGameIds.LeagueofLegends,
+    kGameIds.Dota2,
+  ];
 
   private _captureSettingsInitPromise: Promise<void>;
-  private _lolGameListener: LolGameListener;
+  private _replayGameEventsListener: ReplayGameEventsListener;
 
   // save the default recording/replay's options
   // so we can use it when auto game capture is on...
@@ -56,7 +59,10 @@ export class RecordingService extends PackageServiceBase {
     super();
     this._recorderApi = recorderApi;
     this.initialize();
-    this._lolGameListener = new LolGameListener(this);
+    this._replayGameEventsListener = new ReplayGameEventsListener(
+      this,
+      RecordingService.replayAutoCaptureGameIds,
+    );
     this._captureSettingsInitPromise = this.initializeCaptureSettings();
   }
 
@@ -80,7 +86,7 @@ export class RecordingService extends PackageServiceBase {
 
     // we can't capture elevated game,
     // (window capture, or display capture is available)
-    if (gameInfo.processInfo.isElevated === true) {
+    if (gameInfo.processInfo?.isElevated === true) {
       return;
     }
 
@@ -93,8 +99,8 @@ export class RecordingService extends PackageServiceBase {
     // Below is an example of setting up replays for GEP supported game
     // comment out if you don't want to use GEP
     // MAKE SURE YOU SET AUTO GAME CAPTURE TO TRUE IN THE APP
-    if (gameInfo.classId === kGameIds.LeagueofLegends) {
-      this._lolGameListener.onGameLaunched(gameInfo.classId);
+    if (this.isReplayAutoCaptureGame(gameInfo.classId)) {
+      this._replayGameEventsListener.onGameLaunched(gameInfo.classId);
       return;
     }
 
@@ -107,7 +113,7 @@ export class RecordingService extends PackageServiceBase {
    */
   public async onGameExit() {
 
-    if (this._currentGame?.classId === kGameIds.LeagueofLegends) {
+    if (this.isReplayAutoCaptureGame(this._currentGame?.classId)) {
       await this.onLolGameExit();
       return;
     }
@@ -128,7 +134,7 @@ export class RecordingService extends PackageServiceBase {
    * Called when the League of Legends game exits
    */
   public async onLolGameExit() {
-    this.log('League of Legends game exited, stopping replays');
+    this.log('Replay-enabled game exited, stopping replays');
 
     this._currentGame = null;
 
@@ -137,7 +143,7 @@ export class RecordingService extends PackageServiceBase {
 
   public async onGepEvent(event: any) {
     try {
-      await this._lolGameListener.onNewEvent(event);
+      await this._replayGameEventsListener.onNewEvent(event);
     } catch (error) {
       console.error('[RecordingService] - onGepEvent', error);
     }
@@ -267,27 +273,44 @@ export class RecordingService extends PackageServiceBase {
   }
 
   // ---------------------------------------------------------------------------
-  public setOutputPath(folderPath: string) {
+  public setOutputPath(folderPath: string | null | undefined) {
+    if (typeof folderPath !== 'string' || folderPath.trim().length === 0) {
+      this.log(
+        'Ignoring invalid output path, keeping current output folder',
+        folderPath,
+      );
+      return;
+    }
+
     this._outputFolder = folderPath;
   }
-  // ---------------------------------------------------------------------------
-  public async queryInformation(): Promise<IRecorderInformation> {
-    try {
-      const settings = (
-        await this.createCaptureOptions({
-          separateAudioTracks: false,
-          includeDefaultAudioSources: true,
-        })
-      ).build();
 
-      const obsInfo = await this._recorderApi.queryInformation();
+  public get outputFolder(): string {
+    return this._outputFolder;
+  }
+
+  // ---------------------------------------------------------------------------
+  public async queryInformation(overrideCache?: boolean): Promise<IRecorderInformation> {
+    try {
+      const settings =
+        this.captureSettings ??
+        (
+          await this.createCaptureOptions({
+            separateAudioTracks: false,
+            includeDefaultAudioSources: true,
+          })
+        ).build();
+
+      const obsInfo = await (this._recorderApi.queryInformation as Function)(overrideCache);
 
       return {
         information: obsInfo,
+        autoGameCapture: this.autoGameCapture,
         recordingOptions: this.recordingOptions,
         replaysOptions: this.replaysOptions,
         captureSettings: settings,
         captureSettingsOptions: this.captureSettingsOptions,
+        outputFolder: this._outputFolder,
       };
     } catch (error) {
       this.emit('error', 'Error while querying information', error);
@@ -454,6 +477,13 @@ export class RecordingService extends PackageServiceBase {
     const timestamp = `${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
     const fileName = (prefix ? `${prefix}-` : '') + timestamp + (suffix ? `-${suffix}` : '');
     return fileName;
+  }
+
+  // ---------------------------------------------------------------------------
+  private isReplayAutoCaptureGame(gameId?: number | null): boolean {
+    return gameId != null
+      ? RecordingService.replayAutoCaptureGameIds.includes(gameId)
+      : false;
   }
 
   // ---------------------------------------------------------------------------

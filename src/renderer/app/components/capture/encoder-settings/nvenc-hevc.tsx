@@ -14,14 +14,11 @@ const NVENCHEVCEncoderSettings: FC = () => {
     useContext(AppContext)?.recording;
 
   const onVideoEncoderSettingChanged = (e: ChangeEvent) => {
-    let { value, name, checked } = e.target as any;
-    let videoEncoderSettings = captureSettings.videoEncoderSettings;
-    videoEncoderSettings[name] = checked ? checked : value;
-    setCaptureSettings({
-      ...captureSettings,
-      videoEncoderSettings,
-    });
-
+    let { value, name, checked, type } = e.target as any;
+    let videoEncoderSettings = {
+      ...captureSettings.videoEncoderSettings,
+      [name]: type === 'checkbox' ? checked : value,
+    };
     setCaptureSettings({ ...captureSettings, videoEncoderSettings });
   };
 
@@ -38,7 +35,7 @@ const NVENCHEVCEncoderSettings: FC = () => {
         <ToggleSwitch
           id="enhancements"
           labelText="Enhancements"
-          checked={vidEncSettings.lookahead ?? false}
+          checked={vidEncSettings.lookahead ?? true}
           name="lookahead"
           onChange={onVideoEncoderSettingChanged}
         />
@@ -49,7 +46,7 @@ const NVENCHEVCEncoderSettings: FC = () => {
           id='cpq'
           labelText='cpq'
           value={vidEncSettings?.gpu ?? 0}
-          name="ffmpeg_opts"
+          name="gpu"
           onChange={onVideoEncoderSettingChanged}
         />
       </div>
@@ -60,7 +57,7 @@ const NVENCHEVCEncoderSettings: FC = () => {
           id="video-encoder-preset"
           value={vidEncSettings?.preset || ''}
           onChange={onVideoEncoderSettingChanged}
-          name="preset2"
+          name="preset"
         >
           {['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7']?.map((preset) => (
             <option key={preset} label={preset} value={preset} />
@@ -100,7 +97,7 @@ const NVENCHEVCEncoderSettings: FC = () => {
         <label htmlFor="video-encoder-tune">Tune</label>
         <select
           id="video-encoder-tune"
-          value={vidEncSettings?.profile || 'main'}
+          value={vidEncSettings?.tune || ''}
           onChange={onVideoEncoderSettingChanged}
           name="tune"
         >

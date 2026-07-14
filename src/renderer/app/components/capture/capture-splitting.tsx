@@ -14,7 +14,7 @@ const CaptureSplitting: FC = () => {
         <ToggleSwitch
           id="enableSplitting"
           labelText="Enable Splitting"
-          checked={recordingOptions?.split?.enableManual}
+          checked={recordingOptions?.split?.enableManual ?? false}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
             let checked = e.target.checked;
             let split = checked

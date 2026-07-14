@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { LogType } from './useLogs';
 import { AppActions } from '../api-actions/app-actions';
 import { RecordingActions } from '../api-actions/recording-actions';
 import {
@@ -15,9 +16,16 @@ import {
 } from '@overwolf/ow-electron-packages-types';
 import { RecordingStatus } from '../../../common/recorder/recording-status';
 
-export function useRecording(newLogMessage: (msg: string) => void) {
+export function useRecording(newLogMessage: (msg: string, type?: string, args?: any[]) => void) {
   const [recordingInfo, setRecordingInfoState] =
     useState<RecordingInformation>();
+
+  const [autoGameCapture, setAutoGameCaptureState] = useState(false);
+
+  const setAutoGameCapture = (enabled: boolean) => {
+    setAutoGameCaptureState(enabled);
+    RecordingActions.toggleAutoGameCapture(enabled);
+  };
 
   //----------------------------------------------------------------------------
   const [captureSettings, setCaptureSettingsState] =
@@ -123,6 +131,22 @@ export function useRecording(newLogMessage: (msg: string) => void) {
     setRecordingStatsState(stats);
   };
   //----------------------------------------------------------------------------
+  const [captureOutputStarted, setCaptureOutputStartedState] = useState(false);
+  const [captureElapsed, setCaptureElapsedState] = useState(0);
+
+  useEffect(() => {
+    const active = recordingStatus === 'recording' || recordingStatus === 'replay-capture';
+    if (!active) {
+      setCaptureElapsedState(0);
+      return;
+    }
+    setCaptureElapsedState(0);
+    const interval = setInterval(() => {
+      setCaptureElapsedState((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [recordingStatus]);
+  //----------------------------------------------------------------------------
 
   useEffect(() => {
     const init = async () => {
@@ -131,28 +155,56 @@ export function useRecording(newLogMessage: (msg: string) => void) {
         RecordingActions.onCaptureSettingsChanged(handleCaptureSettingsChanged);
         RecordingActions.onRecordingStatusChanged(handleRecordingStatusChanged);
         RecordingActions.onRecordingStatsChanged(handleRecordingStatsChanged);
+        RecordingActions.onCaptureOutputStarted(() => {
+          setCaptureOutputStartedState(true);
+        });
         RecordingActions.onRecorderInfo((settings) => {
           setRecordingInfoState(settings.information);
+          setAutoGameCaptureState(settings.autoGameCapture ?? false);
+          setOutputPathState((prev) => prev || settings.outputFolder || '');
 
-          setCaptureSettingsOptionsState({
-            audioEncoder: settings.information.audio.defaultEncoder,
-            videoEncoder: settings.information.video.defaultEncoder,
-            includeDefaultAudioSources: true,
-            separateAudioTracks: false,
-          });
-
-          settings.captureSettings.videoSettings.fps = 30;
-          settings.captureSettings.videoEncoderSettings.bitrate = 8000;
-
-          setCaptureSettingsState(settings.captureSettings);
-          setSelectedDisplay(
-            settings.information.monitors.find((d) => d?.isPrimary)?.altId ||
-              '',
+          setCaptureSettingsOptionsState((prev) =>
+            prev ?? {
+              audioEncoder: settings.information.audio.defaultEncoder,
+              videoEncoder: settings.information.video.defaultEncoder,
+              includeDefaultAudioSources: true,
+              separateAudioTracks: false,
+              ...settings.captureSettingsOptions,
+            },
           );
 
-          setRecordingOptionsState(settings.recordingOptions);
-          setReplayCaptureOptionsState({ fileName: '', pastDuration: 30 });
-          setReplayOptionsState(settings.replaysOptions);
+          const initialCaptureSettings = {
+            ...settings.captureSettings,
+            videoSettings: {
+              ...settings.captureSettings.videoSettings,
+              fps: settings.captureSettings.videoSettings?.fps ?? 30,
+            },
+            videoEncoderSettings: {
+              ...settings.captureSettings.videoEncoderSettings,
+              bitrate:
+                settings.captureSettings.videoEncoderSettings?.bitrate ?? 8000,
+            },
+          };
+
+          setCaptureSettingsState((prev) => prev ?? initialCaptureSettings);
+
+          const primaryDisplay =
+            settings.information.monitors.find((d) => d?.isPrimary)?.altId ||
+            '';
+          setSelectedDisplayState((prev) => {
+            if (prev || !primaryDisplay) {
+              return prev;
+            }
+
+            RecordingActions.setRecordingDisplay(primaryDisplay);
+            return primaryDisplay;
+          });
+
+          setRecordingOptionsState((prev) => prev ?? settings.recordingOptions);
+          setReplayCaptureOptionsState(
+            (prev) => prev ?? { fileName: '', pastDuration: 30 },
+          );
+          setReplayOptionsState((prev) => prev ?? settings.replaysOptions);
 
           // newLogMessage('OBS - Info Loaded');
         });
@@ -164,16 +216,13 @@ export function useRecording(newLogMessage: (msg: string) => void) {
     init();
   }, []);
 
-  const handleLogMessage = (...args: any[]) => {
-    let item = '';
-    args.forEach((arg) => {
-      item = `${item}-${JSON.stringify(arg)}`;
-    });
-    newLogMessage(item);
+  const handleLogMessage = (message: string, type: string = 'info', args?: any[]) => {
+    newLogMessage(message, type as LogType, args);
   };
 
   return {
     recordingInfo,
+    autoGameCapture,
     recordingAppOptions,
     captureSettingsOptions,
     captureSettings,
@@ -186,7 +235,10 @@ export function useRecording(newLogMessage: (msg: string) => void) {
     selectedOutputDevice,
     recordingStatus,
     recordingStats,
+    captureOutputStarted,
+    captureElapsed,
     setRecordingAppOptions,
+    setAutoGameCapture,
     setCaptureSettingsOptions,
     setCaptureSettings,
     setRecordingOptions,

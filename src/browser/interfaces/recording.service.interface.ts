@@ -12,7 +12,7 @@ import {
 import { IRecorderInformation } from '../../common/recorder/recorder-information';
 
 export interface IRecordingService {
-  queryInformation(): Promise<IRecorderInformation>;
+  queryInformation(overrideCache?: boolean): Promise<IRecorderInformation>;
   setCaptureMonitorId(displayAltId: string);
   setOutputPath(folderPath: string);
   isRecording(): Promise<boolean>;

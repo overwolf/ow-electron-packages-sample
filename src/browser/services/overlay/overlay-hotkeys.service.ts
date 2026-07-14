@@ -12,8 +12,21 @@ export class OverlayHotkeysService {
    * @param hotkey The hotkey to register.
    * @param callback The callback to invoke when the hotkey is pressed.
    */
-  public registerHotkey(hotkey: IOverlayHotkey, callback: HotkeyCallback) {
-    this.overlayApi.hotkeys.register(hotkey, callback);
+  public registerHotkey(
+    hotkey: IOverlayHotkey,
+    callback: HotkeyCallback,
+  ): boolean {
+    try {
+      this.overlayApi.hotkeys.register(hotkey, callback);
+      return true;
+    } catch (error) {
+      console.error(
+        '[OverlayHotkeysService] Failed to register hotkey',
+        hotkey,
+        error,
+      );
+      return false;
+    }
   }
 
   /**

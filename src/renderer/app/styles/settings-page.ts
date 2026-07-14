@@ -3,6 +3,7 @@ const settingsPageStyles = `
 
     .settings-options-list {
       overflow-x: auto;
+      overflow-y: auto;
       height: calc(100vh - 172px);
       display: flex;
       flex-direction: column;
@@ -78,8 +79,18 @@ const settingsPageStyles = `
           .expanded-container {
             background-color: var(--color-surface-secondary);
             overflow: hidden;
-            max-height: 1000px;
+            max-height: 3000px;
             transition: max-height 0.4s ease;
+          }
+
+          .item-icon {
+            transition: transform 300ms ease;
+          }
+
+          &.is-open {
+            .item-icon {
+              transform: rotate(180deg);
+            }
           }
 
         }
@@ -100,6 +111,29 @@ const settingsPageStyles = `
 
   .overlay-settings, .hotkeys-settings {
     padding: var(--space-600);
+  }
+
+  .high-elevation-helper-settings {
+    margin-bottom: 24px;
+
+    .helper-status-row {
+      align-items: flex-start;
+    }
+
+    .helper-status {
+      color: var(--color-text-tertiary);
+      line-height: var(--font-line-height-500);
+
+      &.is-installed {
+        color: var(--color-success-text, var(--color-text-primary));
+      }
+    }
+
+    .helper-error {
+      color: var(--color-danger-text, #ff8d8d);
+      font-size: var(--font-size-300);
+      margin-top: 8px;
+    }
   }
 
   .settings-title {
@@ -213,6 +247,48 @@ const settingsPageStyles = `
     }
   }
 
+  .bitrate-control {
+    flex-direction: column;
+    align-items: stretch;
+
+    .bitrate-control-inner {
+      width: 100%;
+    }
+
+    .bitrate-presets {
+      display: flex;
+      gap: var(--space-200);
+      margin-top: var(--space-300);
+
+      button {
+        flex: 1;
+
+        &.is-active {
+          border-color: var(--color-border-primary);
+          background-color: var(--color-surface-on-surface-primary-hover);
+        }
+      }
+    }
+  }
+
+  .resolution-presets {
+    display: flex;
+    gap: var(--space-200);
+
+    button {
+      flex: 1;
+
+      &.is-active {
+        border-color: var(--color-border-primary);
+        background-color: var(--color-surface-on-surface-primary-hover);
+      }
+
+      &.preset-clear {
+        flex: 0 0 auto;
+      }
+    }
+  }
+
   .radio-group {
     .radio-group-inner {
       display: flex;
@@ -316,15 +392,33 @@ const settingsPageStyles = `
 
   }
 
-  .more-actions {
-    button {
-      margin-right: 12px;
+  .capture-actions {
+    .capture-actions-group {
+      display: flex;
+      gap: var(--space-200);
+      margin-bottom: var(--space-300);
     }
   }
 
   .hotkey-width {
     input {
      width: 180px;
+    }
+  }
+
+  .display-settings {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .display-moving-notice {
+      font-size: var(--font-size-350);
+      color: var(--color-text-tertiary);
+    }
+
+    .display-single-notice {
+      font-size: var(--font-size-350);
+      color: var(--color-text-tertiary);
     }
   }
 `;

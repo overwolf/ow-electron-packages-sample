@@ -15,14 +15,11 @@ const AV1EncoderSettings: FC = () => {
     useContext(AppContext)?.recording;
 
   const onVideoEncoderSettingChanged = (e: ChangeEvent) => {
-    let { value, name, checked } = e.target as any;
-    let videoEncoderSettings = captureSettings.videoEncoderSettings;
-    videoEncoderSettings[name] = checked ? checked : value;
-    setCaptureSettings({
-      ...captureSettings,
-      videoEncoderSettings,
-    });
-
+    let { value, name, checked, type } = e.target as any;
+    let videoEncoderSettings = {
+      ...captureSettings.videoEncoderSettings,
+      [name]: type === 'checkbox' ? checked : value,
+    };
     setCaptureSettings({ ...captureSettings, videoEncoderSettings });
   };
 

@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import CaptureActions from './capture-actions';
+import CaptureDiagnostics from './capture-diagnostics';
 import CaptureVideo from './capture-video';
 import CaptureAudio from './capture-audio';
 import CaptureOutputGeneral from './capture-output-general';
@@ -71,6 +72,13 @@ const Capture: FC = () => {
       description: 'General settings, video, audio',
       content: <OutputGroup />,
       isExpanded: true,
+    },
+    {
+      type: 'expanded-type',
+      title: 'Diagnostics',
+      description: 'Query info, ffprobe path, Xbox DVR',
+      content: <CaptureDiagnostics />,
+      isExpanded: false,
     },
   ];
 

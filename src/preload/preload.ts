@@ -9,8 +9,7 @@ import {
   RecordingOptions,
   ReplayOptions,
 } from '@overwolf/ow-electron-packages-types';
-import { overwolf } from '@overwolf/ow-electron';
-import { OverlayChannels } from '../common/channels/channels';
+import { OverlayChannels, PackageChannelIpcChannels, UtilityChannels } from '../common/channels/channels';
 
 console.log('** preload **');
 const { contextBridge, ipcRenderer } = require('electron');
@@ -22,8 +21,8 @@ contextBridge.exposeInMainWorld('app', {
   },
   onMessage: (func) => {
     ipcRenderer.on('console-message', (_e, data) => {
-      const { message, args } = data;
-      func(message, ...args);
+      const { message, type, args } = data;
+      func(message, type ?? 'info', args);
     });
   },
   openFolderPicker: () => {
@@ -34,6 +33,15 @@ contextBridge.exposeInMainWorld('app', {
   },
   scanGames: (...args) => {
     return ipcRenderer.invoke('scan-games', ...args);
+  },
+  onElevationHelperPrompt: (func: (gameName: string) => void) => {
+    ipcRenderer.on('elevation-helper-prompt', (_e, gameName: string) => func(gameName));
+  },
+  sendElevationHelperResponse: (install: boolean) => {
+    ipcRenderer.send('elevation-helper-response', install);
+  },
+  trackGames: (...args) => {
+    return ipcRenderer.invoke('track-games', ...args);
   },
   disableAdsFPD: () => {
     return ipcRenderer.invoke('disable-ads-fpd');
@@ -46,6 +54,16 @@ contextBridge.exposeInMainWorld('app', {
   },
   checkForUpdates: () => {
     return ipcRenderer.invoke('check-for-updates');
+  },
+  getUtmParams: () => {
+    return ipcRenderer.invoke('get-utm-params');
+  },
+  isHighElevationHelperInstalled: () => {
+    return ipcRenderer.invoke(UtilityChannels.GET_HIGH_ELEVATION_HELPER_STATUS);
+  
+  },
+  installHighElevationHelper: () => {
+    return ipcRenderer.invoke(UtilityChannels.INSTALL_HIGH_ELEVATION_HELPER);
   },
 });
 
@@ -135,8 +153,16 @@ contextBridge.exposeInMainWorld('recorder', {
     });
   },
 
+  onCaptureOutputStarted: (func) => {
+    ipcRenderer.on('capture-output-started', () => func());
+  },
+
   getObsInfo: () => {
     return ipcRenderer.invoke('get-obs-info');
+  },
+
+  queryInfo: (overrideCache?: boolean) => {
+    return ipcRenderer.invoke('query-info', overrideCache);
   },
 
   //recording-stats
@@ -215,6 +241,36 @@ contextBridge.exposeInMainWorld('recorder', {
   },
 });
 
+contextBridge.exposeInMainWorld('packageChannels', {
+  getAvailableChannels: () =>
+    ipcRenderer.invoke(PackageChannelIpcChannels.GET_AVAILABLE),
+  getCurrentChannels: () =>
+    ipcRenderer.invoke(PackageChannelIpcChannels.GET_CURRENT),
+  getPackageVersions: () =>
+    ipcRenderer.invoke(PackageChannelIpcChannels.GET_VERSIONS),
+  setChannel: (packageName: string, channel?: string) =>
+    ipcRenderer.invoke(PackageChannelIpcChannels.SET, packageName, channel),
+  relaunch: () =>
+    ipcRenderer.invoke(PackageChannelIpcChannels.RELAUNCH),
+  getLogsFolderPath: () =>
+    ipcRenderer.invoke(PackageChannelIpcChannels.GET_LOGS_FOLDER),
+  getInitFailures: () =>
+    ipcRenderer.invoke(PackageChannelIpcChannels.GET_INIT_FAILURES),
+  onChannelReady: (cb: (info: { name: string; version: string }) => void) => {
+    ipcRenderer.on(PackageChannelIpcChannels.READY, (_e, info) => cb(info));
+  },
+  onUpdatePending: (
+    cb: (packages: { name: string; version: string }[]) => void,
+  ) => {
+    ipcRenderer.on(PackageChannelIpcChannels.UPDATE_PENDING, (_e, packages) =>
+      cb(packages ?? []),
+    );
+  },
+  onInitFailed: (cb: (info: { name: string; reason: string }) => void) => {
+    ipcRenderer.on(PackageChannelIpcChannels.INIT_FAILED, (_e, info) => cb(info));
+  },
+});
+
 contextBridge.exposeInMainWorld('electronAPI', {
   maximize: () => {
     return ipcRenderer.invoke('maximize');
@@ -230,5 +286,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   close: () => {
     return ipcRenderer.invoke('close');
+  },
+
+  getDisplays: () => {
+    return ipcRenderer.invoke('get-displays');
+  },
+
+  moveToDisplay: (id: number) => {
+    return ipcRenderer.invoke('move-to-display', id);
+  },
+
+  getScreenshotFormat: (): Promise<'jpg' | 'bmp'> => {
+    return ipcRenderer.invoke('get-screenshot-format');
+  },
+
+  setScreenshotFormat: (format: 'jpg' | 'bmp'): Promise<void> => {
+    return ipcRenderer.invoke('set-screenshot-format', format);
   },
 });

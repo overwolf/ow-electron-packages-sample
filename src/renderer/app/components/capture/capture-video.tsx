@@ -1,7 +1,7 @@
 import React, { ChangeEvent, FC, useContext, useState } from 'react';
 import { kFileFormat } from '@overwolf/ow-electron-packages-types';
 import AppContext from '../../context/app-context';
-import { outputFileFormat, fpsOptions } from './constants';
+import { outputFileFormat, fpsOptions, RESOLUTION_PRESETS, ResolutionPreset } from './constants';
 import AnyTypeInput from '../app-settings/input-elements/any-type-input';
 
 const CaptureVideo: FC = () => {
@@ -89,6 +89,49 @@ const CaptureVideo: FC = () => {
     });
   };
   //----------------------------------------------------------------------------
+  const setBaseResolution = (preset: ResolutionPreset) => {
+    setCaptureSettings({
+      ...captureSettings,
+      videoSettings: {
+        ...captureSettings.videoSettings,
+        baseWidth: preset.width,
+        baseHeight: preset.height,
+      },
+    });
+  };
+
+  const clearBaseResolution = () => {
+    const videoSettings = { ...captureSettings.videoSettings };
+    delete videoSettings.baseWidth;
+    delete videoSettings.baseHeight;
+    setCaptureSettings({ ...captureSettings, videoSettings });
+  };
+
+  const setOutputResolution = (preset: ResolutionPreset) => {
+    const videoSettings = { ...captureSettings.videoSettings };
+    videoSettings.outputWidth = preset.width;
+    videoSettings.outputHeight = preset.height;
+    setCaptureSettings({ ...captureSettings, videoSettings });
+  };
+
+  const clearOutputResolution = () => {
+    const videoSettings = { ...captureSettings.videoSettings };
+    delete videoSettings.outputWidth;
+    delete videoSettings.outputHeight;
+    setCaptureSettings({ ...captureSettings, videoSettings });
+  };
+
+  const currentBaseWidth = captureSettings?.videoSettings?.baseWidth;
+  const currentBaseHeight = captureSettings?.videoSettings?.baseHeight;
+  const currentOutputWidth = captureSettings?.videoSettings?.outputWidth;
+  const currentOutputHeight = captureSettings?.videoSettings?.outputHeight;
+
+  const isBasePresetActive = (preset: ResolutionPreset) =>
+    currentBaseWidth === preset.width && currentBaseHeight === preset.height;
+
+  const isOutputPresetActive = (preset: ResolutionPreset) =>
+    currentOutputWidth === preset.width && currentOutputHeight === preset.height;
+  //----------------------------------------------------------------------------
 
   return (
     <>
@@ -127,46 +170,96 @@ const CaptureVideo: FC = () => {
 
       <div className="settings-input-item">
         <AnyTypeInput
+          key={`baseWidth-${currentBaseWidth}`}
           id="baseWidth"
           labelText="Base width"
           name="baseWidth"
           type="number"
           onBlur={(e) => handleResolutionChange(e)}
-          defaultValue={captureSettings?.videoSettings?.baseWidth ?? ''}
+          defaultValue={currentBaseWidth ?? ''}
         />
       </div>
 
       <div className="settings-input-item">
         <AnyTypeInput
+          key={`baseHeight-${currentBaseHeight}`}
           id="baseHeight"
           labelText="Base height"
           name="baseHeight"
           type="number"
           onBlur={(e) => handleResolutionChange(e)}
-          defaultValue={captureSettings?.videoSettings?.baseHeight ?? ''}
+          defaultValue={currentBaseHeight ?? ''}
         />
       </div>
 
       <div className="settings-input-item">
+        <label>Base resolution presets</label>
+        <div className="resolution-presets">
+          {RESOLUTION_PRESETS.map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              className={`btn-secondary ${isBasePresetActive(preset) ? 'is-active' : ''}`}
+              onClick={() => setBaseResolution(preset)}
+            >
+              {preset.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="btn-secondary preset-clear"
+            onClick={clearBaseResolution}
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-input-item">
         <AnyTypeInput
+          key={`outputWidth-${currentOutputWidth}`}
           id="outputWidth"
           labelText="Output width"
           name="outputWidth"
           type="number"
           onBlur={(e) => handleResolutionChange(e)}
-          defaultValue={captureSettings?.videoSettings?.outputWidth ?? ''}
+          defaultValue={currentOutputWidth ?? ''}
         />
       </div>
 
       <div className="settings-input-item">
         <AnyTypeInput
+          key={`outputHeight-${currentOutputHeight}`}
           id="outputHeight"
           labelText="Output height"
           name="outputHeight"
           type="number"
           onBlur={(e) => handleResolutionChange(e)}
-          defaultValue={captureSettings?.videoSettings?.outputHeight ?? ''}
+          defaultValue={currentOutputHeight ?? ''}
         />
+      </div>
+
+      <div className="settings-input-item">
+        <label>Output resolution presets</label>
+        <div className="resolution-presets">
+          {RESOLUTION_PRESETS.map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              className={`btn-secondary ${isOutputPresetActive(preset) ? 'is-active' : ''}`}
+              onClick={() => setOutputResolution(preset)}
+            >
+              {preset.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="btn-secondary preset-clear"
+            onClick={clearOutputResolution}
+          >
+            Clear
+          </button>
+        </div>
       </div>
     </>
   );

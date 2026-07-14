@@ -19,6 +19,16 @@ import { AudioTracksEnum } from '../../../../common/recorder/audio-trackes-enum'
 
 type FpsOption = 30 | 60 | 90 | 120;
 export const fpsOptions: FpsOption[] = [30, 60, 90, 120];
+export const BITRATE_MIN = 2500;
+export const BITRATE_MAX = 100000;
+export const BITRATE_DEFAULT = 8000;
+export const BITRATE_PRESETS = [
+  BITRATE_MIN,
+  BITRATE_DEFAULT,
+  16000,
+  50000,
+  BITRATE_MAX,
+] as const;
 export const VideoColorRange: kVideoColorRange[] = ['Partial', 'Full'];
 export const VideoColorSpec: kVideoColorSpec[] = [
   'sRGB',
@@ -158,4 +168,17 @@ export const kQuickSyncTargetUsageArray: kQuickSyncTargetUsage[] = [
   'TU5', // Fast
   'TU6', // Faster
   'TU7', // Fastest (Best Speed)
+];
+
+export type ResolutionPreset = {
+  label: string;
+  width: number;
+  height: number;
+};
+
+export const RESOLUTION_PRESETS: ResolutionPreset[] = [
+  { label: 'Full HD', width: 1920, height: 1080 },
+  { label: 'HD', width: 1280, height: 720 },
+  { label: '2K', width: 2560, height: 1440 },
+  { label: '4K', width: 3840, height: 2160 },
 ];

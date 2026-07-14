@@ -15,7 +15,11 @@ const CaptureOutputGeneral: FC = () => {
     setOutputPath,
   } = useContext(AppContext)?.recording;
 
-  const handleOutputPathChange = (path: string) => {
+  const handleOutputPathChange = (path?: string | null) => {
+    if (!path) {
+      return;
+    }
+
     setOutputPath(path);
     setRecordingOptions({
       ...recordingOptions,
@@ -77,6 +81,7 @@ const CaptureOutputGeneral: FC = () => {
               handleDisplayChange(e);
             }}
           >
+            <option value="">-- No Display (QA test) --</option>
             {recordingInfo &&
               recordingInfo?.monitors?.map((monitor) => {
                 return (

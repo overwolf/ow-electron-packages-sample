@@ -17,6 +17,10 @@ import { IRecorderInformation } from '../../../common/recorder/recorder-informat
  UI binding
 */
 export class RecordingActions {
+  static queryInfo = async (overrideCache?: boolean) => {
+    return window.recorder.queryInfo(overrideCache);
+  };
+
   static startCapture = async () => {
     await window.recorder.startCapture();
   };
@@ -121,5 +125,9 @@ export class RecordingActions {
     callback: (status: RecorderStats) => void,
   ) => {
     window.recorder.onRecordingStatsChanged(callback);
+  };
+
+  static onCaptureOutputStarted = (callback: () => void) => {
+    window.recorder.onCaptureOutputStarted(callback);
   };
 }

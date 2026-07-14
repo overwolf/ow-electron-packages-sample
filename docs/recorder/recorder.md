@@ -91,8 +91,7 @@ Import the app from 'electron' & overwolf from \`@overwolf/ow-electron\`.
 #### Register
 
 ```javascript
-const owElectronApp = electronApp as overwolf.OverwolfApp;
-owElectronPackages.on('ready', (e, packageName) => {
+electronApp.on('ready', (e, packageName) => {
     if (packageName === 'recorder') {
       console.log('Recorder package is loaded');
     }

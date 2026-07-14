@@ -66,8 +66,8 @@ export class ExclusiveModeWindowService {
       case 'native':
         this._overlayApi.enterExclusiveMode(this._inputOptions);
         break;
-      case 'customWindow':{
-         // When using a custom exclusive mode window,
+      case 'customWindow': {
+        // When using a custom exclusive mode window,
         // we first need to `enterExclusiveMode()` with a transparent native exclusive
         // mode background, so our custom window will be visible.
         await this.assureExclusiveModeWindow();
@@ -93,7 +93,12 @@ export class ExclusiveModeWindowService {
    */
   public showExclusiveModeCustomWindow(): void {
     if (this._type === 'customWindow' && this._exclusiveWindow !== null) {
-      this._exclusiveWindow.window.show();
+      this._exclusiveWindow.window.showInactive();
+      this.keepCustomExclusiveWindowBehindOverlays();
+
+      setTimeout(() => {
+        this.keepCustomExclusiveWindowBehindOverlays();
+      }, 100);
     }
   }
 
@@ -204,8 +209,10 @@ export class ExclusiveModeWindowService {
       name: 'exclusiveMode',
       width: activeGame.size.width,
       height: activeGame.size.height,
+      show: false,
       zOrder: 'bottomMost',
       transparent: true,
+      focusable: false,
       passthrough: 'passThrough',
       resizable: false,
       webPreferences: { nodeIntegration: true, contextIsolation: false },
@@ -224,5 +231,40 @@ export class ExclusiveModeWindowService {
       console.error('Error creating exclusive mode window:', error);
     }
   }
-}
 
+  /**
+   * Some games restack overlay windows right after exclusive mode is entered.
+   * Re-apply the intended order so OSR windows stay clickable above the custom
+   * exclusive-mode background.
+   */
+  private keepCustomExclusiveWindowBehindOverlays(): void {
+    if (this._exclusiveWindow === null) {
+      return;
+    }
+
+    this._exclusiveWindow.overlayOptions.zOrder = 'bottomMost';
+
+    const visibleOverlayWindows = this._overlayApi.getAllWindows().filter(
+      overlayWindow =>
+        overlayWindow.id !== this._exclusiveWindow?.id &&
+        overlayWindow.window.isVisible(),
+    );
+
+    for (const overlayWindow of visibleOverlayWindows) {
+      if (overlayWindow.overlayOptions.zOrder !== 'topMost') {
+        overlayWindow.overlayOptions.zOrder = 'default';
+      }
+
+      overlayWindow.window.moveTop();
+    }
+
+    const focusedOverlayWindow = visibleOverlayWindows.find(overlayWindow =>
+      overlayWindow.window.isFocused(),
+    );
+    const targetOverlayWindow =
+      focusedOverlayWindow ??
+      visibleOverlayWindows[visibleOverlayWindows.length - 1];
+
+    targetOverlayWindow?.window.focus();
+  }
+}

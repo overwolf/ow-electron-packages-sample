@@ -23,6 +23,11 @@ function SideNavbar() {
               <Icon name="adLayout" /> Ads Tester
             </Link>
           </li>
+          <li className={isActive('/channels') ? 'is-active': ''}>
+            <Link to="/channels">
+              <Icon name="channels" /> Channels
+            </Link>
+          </li>
           <li className={
               isActive('/app-settings') || isActive('/recording-settings') ? 'is-active': ''
             }>

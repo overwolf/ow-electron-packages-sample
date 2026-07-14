@@ -1,8 +1,9 @@
-import overwolf from '@overwolf/ow-electron';
-import { app } from 'electron';
-import EventEmitter from 'events';
 
-export type PackageName = overwolf.overwolf.packages.PackageName;
+import EventEmitter from 'events';
+import { LogLevel } from '../services/base.service';
+import { app } from 'electron';
+
+export type PackageName = overwolf.packages.PackageName;
 
 export abstract class PackageControllerBase extends EventEmitter {
   // Base functionality for all package controllers
@@ -29,12 +30,25 @@ export abstract class PackageControllerBase extends EventEmitter {
   }
 
   protected log(message: string, ...args: any[]) {
+    this._emitLog('info', message, ...args);
+  }
+
+  protected warn(message: string, ...args: any[]) {
+    this._emitLog('warn', message, ...args);
+  }
+
+  protected error(message: string, ...args: any[]) {
+    this._emitLog('error', message, ...args);
+  }
+
+  private _emitLog(type: LogLevel, message: string, ...args: any[]) {
     try {
-      console.log(`[${this.constructor.name}] - ${message}`, ...args);
-      const fullMessage = `[${this.constructor.name}] - ${message}`;
-      this.emit('log', fullMessage, ...args);
-    } catch (error) {
-      console.error('Error logging message:', error);
+      const ts = new Date().toTimeString().slice(0, 8);
+      const fullMessage = `[${ts}] [${this.constructor.name}] - ${message}`;
+      console[type](fullMessage, ...args);
+      this.emit('log', { message: fullMessage, type, args: args.length ? args : undefined });
+    } catch (e) {
+      console.error('Error logging message:', e);
     }
   }
 

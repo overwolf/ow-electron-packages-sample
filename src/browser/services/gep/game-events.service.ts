@@ -1,4 +1,4 @@
-import { overwolf } from '@overwolf/ow-electron';
+import { GepGameLaunchEvent, OverwolfGameEventPackage } from '@overwolf/ow-electron-packages-types';
 import EventEmitter from 'events';
 
 /**
@@ -6,11 +6,11 @@ import EventEmitter from 'events';
  * Handles required-features, info retrieval, and emits game-related events.
  */
 export class GameEventsService extends EventEmitter {
-  private _gepApi: overwolf.packages.OverwolfGameEventPackage;
+  private _gepApi: OverwolfGameEventPackage;
   private _activeGame = 0;
   private _gepGamesId: number[] = [];
 
-  constructor(gepApi: overwolf.packages.OverwolfGameEventPackage) {
+  constructor(gepApi: OverwolfGameEventPackage) {
     super();
     this._gepApi = gepApi;
   }
@@ -28,7 +28,7 @@ export class GameEventsService extends EventEmitter {
    * @param gameId - The game ID
    */
   public async enableDetectedGame(
-    event: overwolf.packages.GepGameLaunchEvent,
+    event: GepGameLaunchEvent,
     gameId: number,
   ) {
     // Enables GEP for the game

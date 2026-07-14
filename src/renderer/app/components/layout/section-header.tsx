@@ -18,15 +18,14 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
 
   return (
     <div className='page-title'>
+      {prevPageTitle && prevPageRoute &&
+        <Link to={prevPageRoute} className='back-btn'>
+          <Icon name="navRightIcon" className='back-icon' />
+          {prevPageTitle}
+        </Link>
+      }
+
       <div className='title-wrapper'>
-
-        {prevPageTitle && prevPageRoute &&
-          <>
-            <Link to={prevPageRoute}>{prevPageTitle}</Link>
-            <Icon name="navRightIcon" />
-          </>
-        }
-
         <h2>{title}</h2>
       </div>
 

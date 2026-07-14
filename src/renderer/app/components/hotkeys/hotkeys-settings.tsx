@@ -7,6 +7,17 @@ interface IHotkeyConfig {
   defaultBinding: string;
 }
 
+interface IHotkeyBindingDraft {
+  keyCode: string | number;
+  modifiers: {
+    alt: boolean;
+    ctrl: boolean;
+    shift: boolean;
+    custom: undefined;
+    meta: boolean;
+  };
+}
+
 /**
  * HotKeysSettings component allows users to configure hotkeys for various actions.
  * It provides an input field where users can set a hotkey by pressing the desired key combination.
@@ -33,6 +44,11 @@ const HotKeysSettings = () => {
       id: 'start-stop-recording',
       label: 'Start/Stop recording',
       defaultBinding: 'Ctrl+B',
+    },
+    {
+      id: 'take-screenshot',
+      label: 'Take screenshot',
+      defaultBinding: 'Ctrl+Shift+S',
     },
   ];
 
@@ -74,29 +90,36 @@ const HotKeysSettings = () => {
         [hotkeyId]: hotkeyAsString,
       }));
 
-      // Register the hotkey with the overlay API
-      hotkeyBuilder(hotkeyId, hotkeyAsString);
+      // Register the hotkey with the overlay API using the physical key code.
+      hotkeyBuilder(hotkeyId, createHotkeyBinding(e));
       e.currentTarget.blur();
     }
   };
 
-  const hotkeyBuilder = (hotkeyName: string, hotkeyCombination: string) => {
-    const parts = hotkeyCombination.split('+');
-    const keyCodeString = parts.pop() || '';
-    const keyCodeNum = keyCodeString.charCodeAt(0);
-    const modifiers = {
-      alt: parts.includes('Alt'),
-      ctrl: parts.includes('Ctrl'),
-      shift: parts.includes('Shift'),
-      custom: undefined, // or set to a number if needed
-      meta: parts.includes('Meta'),
-    };
-
+  const hotkeyBuilder = (
+    hotkeyName: string,
+    hotkeyBinding: IHotkeyBindingDraft,
+  ) => {
     window.overlay.changeHotkey({
       name: hotkeyName,
-      keyCode: keyCodeNum,
-      modifiers: modifiers,
+      keyCode: hotkeyBinding.keyCode,
+      modifiers: hotkeyBinding.modifiers,
     });
+  };
+
+  const createHotkeyBinding = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ): IHotkeyBindingDraft => {
+    return {
+      keyCode: e.code || e.key.toUpperCase().charCodeAt(0),
+      modifiers: {
+        alt: e.altKey,
+        ctrl: e.ctrlKey,
+        shift: e.shiftKey,
+        custom: undefined,
+        meta: e.metaKey,
+      },
+    };
   };
 
   const normalizeKey = (key: string) => {

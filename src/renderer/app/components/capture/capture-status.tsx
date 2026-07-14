@@ -1,5 +1,6 @@
 import React, { FC, useContext } from 'react';
 import { RecordingActions } from '../../api-actions/recording-actions';
+import { AppActions } from '../../api-actions/app-actions';
 import AppContext from '../../context/app-context';
 import { RecorderStats } from '@overwolf/ow-electron-packages-types';
 
@@ -10,9 +11,23 @@ const statusColors: Map<string, string> = new Map<string, string>([
   ['replay', 'yellow'],
   ['replay-capture', 'lightGreen'],
 ]);
+
+const formatElapsed = (seconds: number): string => {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return [h, m, s]
+    .map((v) => String(v).padStart(2, '0'))
+    .join(':');
+};
+
 // -----------------------------------------------------------------------------
 const CaptureStatus: FC = () => {
-  const { recordingStatus, recordingStats } = useContext(AppContext)?.recording;
+  const { recordingStatus, recordingStats, outputPath, captureOutputStarted, captureElapsed } = useContext(AppContext)?.recording;
+
+  const isCapturing = recordingStatus === 'recording';
+  const isReplayCapturing = recordingStatus === 'replay-capture';
+
   return (
     <fieldset>
       <hr />
@@ -67,6 +82,27 @@ const CaptureStatus: FC = () => {
             </tr>
           </tbody>
         </table>
+      )}
+
+      {isCapturing && (
+        <p style={{ margin: '8px 0 4px', fontVariantNumeric: 'tabular-nums' }}>
+          Capture duration: <strong>{formatElapsed(captureElapsed ?? 0)}</strong>
+        </p>
+      )}
+
+      {isReplayCapturing && (
+        <p style={{ margin: '8px 0 4px', fontVariantNumeric: 'tabular-nums' }}>
+          Capture replay duration: <strong>{formatElapsed(captureElapsed ?? 0)}</strong>
+        </p>
+      )}
+
+      {outputPath && (
+        <button
+          className="btn-secondary"
+          onClick={() => AppActions.openFolder(outputPath)}
+        >
+          Open captures folder
+        </button>
       )}
     </fieldset>
   );

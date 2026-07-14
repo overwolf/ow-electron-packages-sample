@@ -4,6 +4,8 @@ import { CaptureSettings, CaptureSettingsOptions, RecordingInformation, Recordin
 export interface IRecorderInformation {
   information: RecordingInformation;
 
+  autoGameCapture: boolean;
+
   recordingOptions: RecordingOptions;
 
   replaysOptions: ReplayOptions;
@@ -11,4 +13,6 @@ export interface IRecorderInformation {
   captureSettings: CaptureSettings; // current capture settings
 
   captureSettingsOptions: CaptureSettingsOptions;
+
+  outputFolder: string;
 }

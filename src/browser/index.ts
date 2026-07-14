@@ -12,10 +12,10 @@ import { GameEventsController } from './controllers/gep/game-events.controller';
  */
 const bootstrap = (): Application => {
   const recordingController = new RecordingController();
-  const overlayController = new OverlayController();
   const gepController = new GameEventsController();
   // const gepService = gepController.service;
   const utilityService = new UtilityService();
+  const overlayController = new OverlayController(utilityService);
   // const lolListener = new LolGameListener(recordingService, gepService);
 
   const mainWindowController = new MainWindowController(
@@ -44,6 +44,15 @@ const bootstrap = (): Application => {
   );
 };
 
+//-----------------------------------QA---------------------------------------
+// OSR software-compositor white-frame repro: matches Electron's own
+// https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering example.
+// Must be called before whenReady() - opt in via --test-osr-app-level-disable-gpu.
+if (process.argv.includes('--test-osr-app-level-disable-gpu')) {
+  ElectronApp.disableHardwareAcceleration();
+}
+//-----------------------------------QA---------------------------------------
+
 const app = bootstrap();
 
 ElectronApp.whenReady().then(() => {
@@ -56,11 +65,3 @@ ElectronApp.on('window-all-closed', () => {
   }
 });
 
-//-----------------------------------QA-----------------------------------------
-// For "Electron App can launch a window with a timeout function"
-// ElectronApp.whenReady().then(async () => {
-//   setTimeout(() => {
-//     app.run();
-//   }, 10000);
-// });
-//-----------------------------------QA-----------------------------------------

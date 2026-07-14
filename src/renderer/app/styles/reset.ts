@@ -281,7 +281,7 @@ const resetStyles = `
     appearance: base-select;
     border-radius: 0;
     border: none;
-    padding: 4px 24px 4px 6px;
+    padding: 4px 12px 4px 6px;
     outline: none !important;
     border: 1px solid transparent;
     transition: border 300ms ease;
@@ -300,7 +300,7 @@ const resetStyles = `
       background-image: var(--picker-icon);
       background-size: 24px;
       background-repeat: no-repeat;
-      background-position: right 12px top 8px;
+      background-position: right 6px top 8px;
     }
 
     &::picker-icon {
@@ -313,7 +313,7 @@ const resetStyles = `
       width: 24px;
       height: 24px;
       position: absolute;
-      right: 12px;
+      right: 6px;
       z-index: 1;
     }
 

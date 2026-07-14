@@ -1,8 +1,10 @@
 import { app, ipcMain } from 'electron';
+import { exec } from 'child_process';
 import { PackageControllerBase } from '../base.controller';
 import { RecordingService } from '../../services/recorder/recording.service';
 import {
   IOverwolfRecordingApi,
+  MonitorInfo,
   RecordingAppOptions,
   RecordingOptions,
   ReplayOptions,
@@ -14,7 +16,6 @@ import {
   RecordStopEventArgs,
   SplitRecordArgs,
   ReplayVideo,
-  RecorderStats,
   AudioDeviceSettingsInfo,
 } from '@overwolf/ow-electron-packages-types';
 
@@ -33,10 +34,16 @@ export class RecordingController extends PackageControllerBase {
 
   protected onPackageReady(): void {
     this._recorderApi = app.overwolf.packages.recorder;
+
+    if (!this._recorderApi) {
+      this.log('Recorder API is not available after ready event');
+      return;
+    }
+
     // onPackageReady may be called multiple times (for example the package manager crashed or reloaded)
     if (!this._recordingService) {
       this._recordingService = new RecordingService(this._recorderApi);
-  }
+    }
     this.forwardServiceEvents();
 
     this.registerToRecordingPackageEvents();
@@ -66,6 +73,7 @@ export class RecordingController extends PackageControllerBase {
       'recording-started',
       (recordEventArgs: RecordEventArgs) => {
         this.log('Recording Started', recordEventArgs);
+        this.emit('capture-output-started');
       },
     );
 
@@ -98,14 +106,20 @@ export class RecordingController extends PackageControllerBase {
       this.log('Replay Captured', replayVideo);
     });
 
-    this._recorderApi.on('stats', (stats: RecorderStats) => {
-      // emit the stats to the main window
-      this.emit('stats', stats);
-    });
   }
 
   public get service(): RecordingService {
     return this._recordingService;
+  }
+
+  public async queryMonitors(): Promise<MonitorInfo[] | null> {
+    if (!this._recorderApi) return null;
+    try {
+      const info = await this._recorderApi.queryInformation();
+      return info?.monitors ?? null;
+    } catch {
+      return null;
+    }
   }
 
   // Expose selected properties for consumers (e.g., MainWindowController)
@@ -127,6 +141,10 @@ export class RecordingController extends PackageControllerBase {
 
   public get captureSettingsOptions(): CaptureSettingsOptions {
     return this._recordingService?.captureSettingsOptions;
+  }
+
+  public get outputFolder(): string {
+    return this._recordingService?.outputFolder;
   }
 
   public async captureFromHotkey() {
@@ -152,8 +170,12 @@ export class RecordingController extends PackageControllerBase {
 
   // ---------------------------------------------------------------------------
   private forwardServiceEvents() {
-    this._recordingService.on('log', (message: string, ...args: any[]) => {
-      this.log(message, ...args);
+    this._recordingService.on('log', (logData: any, ...args: any[]) => {
+      if (typeof logData === 'object') {
+        this.emit('log', logData);
+      } else {
+        this.log(logData, ...args);
+      }
     });
     this._recordingService.on('stats', (stats) => this.emit('stats', stats));
     this._recordingService.on('capture-settings-changed', () =>
@@ -169,6 +191,18 @@ export class RecordingController extends PackageControllerBase {
   private registerToIpc() {
     ipcMain.handle('get-obs-info', async () => {
       return this._recordingService.queryInformation();
+    });
+
+    ipcMain.handle('query-info', async (_event, overrideCache?: boolean) => {
+      this.log(`query-info requested (overrideCache: ${overrideCache ?? false})`);
+      try {
+        const info = await this._recordingService.queryInformation(overrideCache);
+        this.emit('recorder-info', info);
+        return info;
+      } catch (error) {
+        this.log(`query-info error: ${error?.message ?? error}`);
+        throw error;
+      }
     });
 
     ipcMain.handle('start-capture', async () => {
@@ -282,12 +316,15 @@ export class RecordingController extends PackageControllerBase {
       }
     });
 
-    ipcMain.handle('set-output-path', async (_e, folderPath: string) => {
+    ipcMain.handle(
+      'set-output-path',
+      async (_e, folderPath?: string | null) => {
       this._recordingService.setOutputPath(folderPath);
-    });
+      },
+    );
 
     ipcMain.handle('set-recorder-display', (_e, displayAltId: string) => {
-      if (!displayAltId) return;
+      if (displayAltId === undefined || displayAltId === null) return;
       this._recordingService.setCaptureMonitorId(displayAltId);
     });
 

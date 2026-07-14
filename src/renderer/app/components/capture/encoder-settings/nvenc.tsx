@@ -12,14 +12,11 @@ const NVENCEncoderSettings: FC = () => {
     useContext(AppContext)?.recording;
 
   const onVideoEncoderSettingChanged = (e: ChangeEvent) => {
-    let { value, name, checked } = e.target as any;
-    let videoEncoderSettings = captureSettings.videoEncoderSettings;
-    videoEncoderSettings[name] = checked ? checked : value;
-    setCaptureSettings({
-      ...captureSettings,
-      videoEncoderSettings,
-    });
-
+    let { value, name, checked, type } = e.target as any;
+    let videoEncoderSettings = {
+      ...captureSettings.videoEncoderSettings,
+      [name]: type === 'checkbox' ? checked : value,
+    };
     setCaptureSettings({ ...captureSettings, videoEncoderSettings });
   };
 
@@ -47,7 +44,7 @@ const NVENCEncoderSettings: FC = () => {
           id='cpq'
           labelText='cpq'
           value={vidEncSettings?.cpq ?? 20}
-          name="ffmpeg_opts"
+          name="cpq"
           onChange={onVideoEncoderSettingChanged}
         />
       </div>

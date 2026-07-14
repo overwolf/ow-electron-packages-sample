@@ -1,4 +1,3 @@
-import { overwolf } from '@overwolf/ow-electron';
 
 export class AppActions {
   static get version(): string {
@@ -33,7 +32,7 @@ export class AppActions {
   };
 
 
-  static onMessage = async (callback: () => void) => {
+  static onMessage = async (callback: (message: string, type?: string) => void) => {
     window.app.onMessage(callback);
   };
 
@@ -41,8 +40,16 @@ export class AppActions {
     window.app.scanGames();
   };
 
+  static trackGames = async (classId?: number) => {
+    return window.app.trackGames(classId);
+  };
+
   static disableAdsFPD = async () => {
     window.app.disableAdsFPD();
+  };
+
+  static disableAdsOptimization = async () => {
+    window.app.disableAdsOptimization();
   };
 
   static checkForPendingUpdates = async () => {
@@ -67,5 +74,17 @@ export class AppActions {
 
   static checkForUpdates = async () => {
     return window.app.checkForUpdates();
+  };
+
+  static utmParams = async (): Promise<string | null> => {
+    return window.app.getUtmParams();
+  };
+
+  static isHighElevationHelperInstalled = async () => {
+    return window.app.isHighElevationHelperInstalled();
+  };
+
+  static installHighElevationHelper = async () => {
+    return window.app.installHighElevationHelper();
   };
 }

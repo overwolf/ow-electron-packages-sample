@@ -12,15 +12,17 @@ import {
 import React, { ChangeEvent, createContext } from 'react';
 import { RecordingStatus } from '../../../common/recorder/recording-status';
 import { AvailablePackages, UiCaptureSettings } from './context-types';
+import { LogEntry, LogType } from '../hooks/useLogs';
 
 interface LogContext {
-  logMessages?: string[];
-  newLogMessage?: (message: string) => void;
+  logMessages?: LogEntry[];
+  newLogMessage?: (message: string, type?: LogType, args?: any[]) => void;
   clearMessages?: () => void;
 }
 
 interface RecordingContext {
   recordingInfo?: RecordingInformation;
+  autoGameCapture?: boolean;
   recordingAppOptions?: RecordingAppOptions;
   recordingOptions?: RecordingOptions;
   outputPath?: string;
@@ -33,7 +35,10 @@ interface RecordingContext {
   selectedOutputDevice?: AudioDeviceSettingsInfo;
   recordingStatus?: RecordingStatus;
   recordingStats?: RecorderStats;
+  captureOutputStarted?: boolean;
+  captureElapsed?: number;
   setRecordingInfo?: (info: RecordingInformation) => void;
+  setAutoGameCapture?: (enabled: boolean) => void;
   setRecordingAppOptions?: (info: RecordingAppOptions) => void;
   setRecordingOptions?: (info: RecordingOptions) => void;
   setOutputPath?: (path: string) => void;

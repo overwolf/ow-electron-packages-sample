@@ -1,14 +1,20 @@
 import { useState } from 'react';
 
-export function useLogs() {
-  const [logMessages, setLogMessages] = useState<string[]>([]);
+export type LogType = 'info' | 'warn' | 'success' | 'error' | 'result' | 'dim';
 
-  const newLogMessage = (message: string) => {
+export interface LogEntry {
+  message: string;
+  type: LogType;
+  args?: any[];
+}
+
+export function useLogs() {
+  const [logMessages, setLogMessages] = useState<LogEntry[]>([]);
+
+  const newLogMessage = (message: string, type: LogType = 'info', args?: any[]) => {
     setLogMessages((prev) => {
-      const separator =
-        '-------------------------------------------------------';
       console.log('message', message);
-      return [...prev, separator, message];
+      return [...prev, { message, type, args }];
     });
   };
 

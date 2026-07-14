@@ -1,17 +1,17 @@
-import React, { ChangeEvent, FC, useContext, useState } from 'react';
+import React, { ChangeEvent, FC, useContext } from 'react';
 import AppContext from '../../context/app-context';
-import { RecordingActions } from '../../api-actions/recording-actions';
 import ToggleSwitch from '../app-settings/input-elements/toggle-switch';
 
 // -----------------------------------------------------------------------------
 const CaptureGeneral: FC = () => {
   const {
+    autoGameCapture,
     recordingAppOptions: recordingAppOptions,
     recordingOptions,
+    setAutoGameCapture,
     setRecordingOptions,
     setRecordingAppOptions,
   } = useContext(AppContext)?.recording;
-  const [listenToGames, setListenToGames] = useState(false);
 
   return (
     <>
@@ -47,10 +47,9 @@ const CaptureGeneral: FC = () => {
         <ToggleSwitch
           id="AutoGamesCapture"
           labelText="Auto games capture"
-          checked={listenToGames}
+          checked={autoGameCapture}
           onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setListenToGames(e.target.checked);
-            RecordingActions.toggleAutoGameCapture(e.target.checked);
+            setAutoGameCapture(e.target.checked);
           }}
         />
       </div>

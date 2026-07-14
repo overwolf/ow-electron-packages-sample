@@ -11,7 +11,7 @@ export class UpdaterService {
     autoUpdater.allowDowngrade = false; // Prevent downgrades
     autoUpdater.setFeedURL({
       provider: 'generic',
-      url: 'https://electron-updates.overwolf.com/electron-updates/electron/afebjiflnalenhcoojjobefjapnjkpibggbbbjmd',
+      url: 'https://electron-updates.overwolf.com/electron-updates/electron/nmldjbjpjgphngofdaekabelhnliphfdoahdgpkh',
       // url: 'https://electron-updates-qa.overwolf.com/electron-updates/electron/afebjiflnalenhcoojjobefjapnjkpibggbbbjmd'
     });
   }

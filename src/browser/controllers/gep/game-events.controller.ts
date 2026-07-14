@@ -1,7 +1,7 @@
 import { app, ipcMain } from 'electron';
 import { PackageControllerBase } from '../base.controller';
 import { GameEventsService } from '../../services/gep/game-events.service';
-import { overwolf } from '@overwolf/ow-electron';
+import { OverwolfGameEventPackage } from '@overwolf/ow-electron-packages-types';
 
 /**
  * Controller for the Game Events Package (GEP).
@@ -9,7 +9,7 @@ import { overwolf } from '@overwolf/ow-electron';
  */
 export class GameEventsController extends PackageControllerBase {
   private _gepService: GameEventsService;
-  private _gepApi: overwolf.packages.OverwolfGameEventPackage;
+  private _gepApi: OverwolfGameEventPackage;
   private _registeredGameIds: number[] = [];
 
   constructor() {
@@ -18,6 +18,7 @@ export class GameEventsController extends PackageControllerBase {
   }
 
   protected onPackageReady(): void {
+    //@ts-ignore
     this._gepApi = app.overwolf.packages.gep;
     if (!this._gepService) {
       this._gepService = new GameEventsService(this._gepApi);
@@ -43,10 +44,10 @@ export class GameEventsController extends PackageControllerBase {
     this._gepApi.removeAllListeners();
 
     this._gepApi.on('game-detected', (event, gameId, name, gameInfo) => {
-      if (!this._registeredGameIds.includes(gameId)) {
-        this.log(`Application is not registered to ${name}, gameId: ${gameId}`);
-        return;
-      }
+      // if (!this._registeredGameIds.includes(gameId)) {
+      //   this.log(`Application is not registered to ${name}, gameId: ${gameId}`);
+      //   return;
+      // }
       this.log('Game detected', name, gameId, gameInfo);
       this._gepService.enableDetectedGame(event, gameId);
     });

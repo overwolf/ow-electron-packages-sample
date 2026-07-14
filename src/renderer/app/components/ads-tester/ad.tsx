@@ -35,10 +35,12 @@ const Ad: FC<AdProps> = ({
     }
 
     const tempAdView = document.createElement('owadview');
+    const customTrackingJsonStr = JSON.stringify({"testQAKey": "testQAValue"});
     tempAdView.setAttribute('id', 'mainAd');
     tempAdView.setAttribute('cid', 'mainAd');
     tempAdView.setAttribute('slotsize', `${adSize[0]}x${adSize[1]}`);
-    
+    tempAdView.setAttribute('customTracking', customTrackingJsonStr);
+
     // Enable high impact ads via adstyle attribute (per Overwolf API)
     if (enableHighImpact) {
       tempAdView.setAttribute('adstyle', 'high-impact-ad;');
@@ -141,7 +143,7 @@ const Ad: FC<AdProps> = ({
 
       <div className='ad-actions'>
           <span>{adName}{enableHighImpact ? ' (HI)' : ''}:</span>
-         <button className='ad-btn' id="startAdButton" onClick={startAd}>
+        <button className='ad-btn' id="startAdButton" onClick={startAd}>
           startAd
         </button>
         <button className='ad-btn' id="stopAdButton" onClick={stopAd}>

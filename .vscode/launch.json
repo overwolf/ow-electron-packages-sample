@@ -17,7 +17,7 @@
         ".",
         "--test-ad",
         // package DEV env
-        // "--owepm-packages-url=https://electronapi-qa.overwolf.com/packages",
+        // "--owepm-packages-url=https://electronapi-qa.overwolf.com/v2/packages",
         "--remote-debugging-port=9222",
         "--remote-allow-origins=*",
       ],
@@ -30,7 +30,9 @@
       ],
       "env": {
         "ELECTRON_DISABLE_SECURITY_WARNINGS": "true",
-        "ELECTRON_IS_DEV": "1"
+        "ELECTRON_IS_DEV": "1",
+        "OW_CLI_EMAIL" :"",
+        "OW_CLI_API_KEY":"", 
       }
     },
     {

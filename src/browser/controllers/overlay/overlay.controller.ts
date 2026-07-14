@@ -1,6 +1,10 @@
 import { app, ipcMain } from 'electron';
+import path from 'path';
+import fs from 'fs';
 import {
   GamesFilter,
+  GameInfo,
+  GameWindowInfo,
   IOverwolfOverlayApi,
 } from '@overwolf/ow-electron-packages-types';
 import { OverlayChannels } from '../../../common/channels/channels';
@@ -8,6 +12,7 @@ import { PackageControllerBase } from '../base.controller';
 import { OverlayHotkeysService } from '../../services/overlay/overlay-hotkeys.service';
 import { IngameWindowsController } from './ingame-windows.controller';
 import { ExclusiveModeWindowController } from './exclusive-mode-window.controller';
+import { UtilityService } from '../../services/utility.service';
 
 /**
  * Controller for the Overlay package.
@@ -24,7 +29,7 @@ export class OverlayController extends PackageControllerBase {
    * Constructor for the OverlayController.
    * @param overlayService - The service responsible for managing overlay windows.
    */
-  constructor() {
+  constructor(private readonly utilityService: UtilityService) {
     super('overlay');
     this.registerToIpc();
   }
@@ -52,13 +57,25 @@ export class OverlayController extends PackageControllerBase {
   public registerToGames(gameIds: number[]) {
     const filter: GamesFilter = {
       gamesIds: gameIds,
-      includeUnsupported: true,
       all: false,
     };
 
     this._overlayApi.registerGames(filter);
 
     this.log(`Registered games for overlay: ${gameIds.join(', ')}`);
+  }
+
+  /**
+  * Registers supported games for the overlay.
+  */
+  public registerToAllGames() {
+    const filter: GamesFilter = {
+      all: true,
+    };
+
+    this._overlayApi.registerGames(filter);
+
+    this.log(`Registered all games for overlay`);
   }
 
   /**
@@ -70,6 +87,9 @@ export class OverlayController extends PackageControllerBase {
     this._ingameWindowsController = new IngameWindowsController(
       this._overlayApi,
     );
+    this._ingameWindowsController.on('log', (message, ...args) => {
+      this.emit('log', message, ...args);
+    });
     this._exclusiveModeWindowController = new ExclusiveModeWindowController(
       this._overlayApi,
       this._hotkeysService,
@@ -84,26 +104,19 @@ export class OverlayController extends PackageControllerBase {
     // Remove all listeners to avoid duplicates
     this._overlayApi.removeAllListeners();
 
-    this._overlayApi.on('game-launched', (event, gameInfo) => {
+    this._overlayApi.on('game-launched', async (event, gameInfo) => {
       this.log('Game Launched', gameInfo);
 
-      // Prevent injection into elevated processes.
-      // If both the game and the app are elevated, `isElevated` will return
-      // `False` and we will be able to inject into the game.
-      if (gameInfo.processInfo.isElevated === true) {
-        this.log(
-          'Game Launched - Elevated Process Detected',
-          gameInfo.name,
-          'Cannot inject overlay into elevated processes.',
-        );
-        return;
+      try {
+        await this.handleGameLaunched(event, gameInfo);
+      } catch (error) {
+        this.log('Error while handling game launch', error);
+        event.dismiss();
       }
-
-      event.inject();
     });
 
     this._overlayApi.on('game-injection-error', (gameInfo, error) => {
-      this.log('Game Injection Error', gameInfo, error);
+      this.error(`Game '${gameInfo.id}-${gameInfo.name}' Injection Error - ${error}`, gameInfo, error);
     });
 
     this._overlayApi.on('game-injected', async (gameInfo) => {
@@ -112,11 +125,19 @@ export class OverlayController extends PackageControllerBase {
       // Create an in-game window as an example
       try {
         //don't create in-game window for 109021 (LoL Launcher)
-        if (gameInfo.id !== 109021) {
+        if (gameInfo.type == 'Game') {
           await this._ingameWindowsController.makeInGameWindow();
         }
+
       } catch (error) {
         this.log('Error creating in-game window', error);
+      }
+
+      // Notify main window to move away from the game's screen
+      const activeInfo = this._overlayApi.getActiveGameInfo();
+      const gameScreen = activeInfo?.gameWindowInfo?.screen ?? null;
+      if (gameScreen != null) {
+        this.emit('game-on-screen', gameScreen);
       }
     });
 
@@ -201,7 +222,7 @@ export class OverlayController extends PackageControllerBase {
         this.log('Error creating in-game DPI window', error);
       }
     });
-    //------------------------------QA------------------------------------------
+
   }
 
   /**
@@ -221,7 +242,7 @@ export class OverlayController extends PackageControllerBase {
         // Currently in exclusive mode - switch to normal overlay mode
         this.log('Switching from exclusive mode to overlay mode');
         this._exclusiveModeWindowController.exitExclusiveMode();
-        
+
         // Show the in-game window
         const overlayWindow = this._overlayApi.getAllWindows().at(0);
         if (overlayWindow) {
@@ -230,7 +251,7 @@ export class OverlayController extends PackageControllerBase {
       } else {
         // Currently in normal overlay mode - switch to exclusive mode
         this.log('Switching from overlay mode to exclusive mode');
-        
+
         // Hide the in-game window
         const overlayWindow = this._overlayApi.getAllWindows().at(0);
         if (overlayWindow) {
@@ -355,6 +376,50 @@ export class OverlayController extends PackageControllerBase {
       },
     );
     //--------------------------------------------------------------------------
+    // Create a DPI-aware OSR window
+    this._hotkeysService.registerHotkey(
+      {
+        name: 'create-dpi-aware-osr-window',
+        keyCode: 88, // x
+        modifiers: {
+          ctrl: true,
+        },
+      },
+      async (hotkey, state) => {
+        if (state == 'pressed') {
+          this.log(`pressed '${hotkey.name}'`);
+
+          try {
+            await this._ingameWindowsController.makeDPIAwareWindow();
+          } catch (error) {
+            this.log('Error creating DPI-aware OSR window', error);
+          }
+        }
+      },
+    );
+    //--------------------------------------------------------------------------
+    // Create a DPI-aware OSR window loading an external webpage
+    this._hotkeysService.registerHotkey(
+      {
+        name: 'create-dpi-osr-window',
+        keyCode: 79, // o
+        modifiers: {
+          ctrl: true,
+        },
+      },
+      async (hotkey, state) => {
+        if (state == 'pressed') {
+          this.log(`pressed '${hotkey.name}'`);
+
+          try {
+            await this._ingameWindowsController.createAndShowInGameDpiWindow();
+          } catch (error) {
+            this.log('Error creating DPI OSR window', error);
+          }
+        }
+      },
+    );
+    //--------------------------------------------------------------------------
     // Start/Stop recording
     this._hotkeysService.registerHotkey(
       {
@@ -385,6 +450,46 @@ export class OverlayController extends PackageControllerBase {
         if (state == 'pressed') {
           this.log(`pressed '${hotkey.name}'`);
           this.emit('show-hide-desktop-window');
+        }
+      },
+    );
+    //--------------------------------------------------------------------------
+    // Take a screenshot using a layout-independent physical key binding
+    this._hotkeysService.registerHotkey(
+      {
+        name: 'take-screenshot',
+        keyCode: 'KeyS',
+        modifiers: {
+          ctrl: true,
+          shift: true,
+        },
+
+      },
+      (hotkey, state) => {
+        if (state == 'pressed') {
+          this.log(`pressed '${hotkey.name}'`);
+          this.emit('take-screenshot');
+        }
+      },
+    );
+    //--------------------------------------------------------------------------
+    // Move the first OSR window to the top-left corner of the game window
+    this._hotkeysService.registerHotkey(
+      {
+        name: 'move-ingame-top-left',
+        keyCode: 'KeyP',
+      },
+      (hotkey, state) => {
+        if (state == 'pressed') {
+          const overlayWindow = this._overlayApi.getAllWindows().at(0);
+          if (!overlayWindow) {
+            return;
+          }
+
+          this.log(`pressed '${hotkey.name}'`);
+          overlayWindow.window.setPosition(0, 0);
+          overlayWindow.window.show();
+          overlayWindow.window.moveTop();
         }
       },
     );
@@ -438,5 +543,55 @@ export class OverlayController extends PackageControllerBase {
 
   public sendGepEventToWindows(event: { gameId: number; data: any }): void {
     this.broadcastToIngameWindows('gep-event', event);
+  }
+
+  public getActiveGameWindowInfo(): GameWindowInfo | undefined {
+    return this._overlayApi?.getActiveGameInfo()?.gameWindowInfo;
+  }
+
+  private async handleGameLaunched(
+    event: { inject: () => void; dismiss: () => void },
+    gameInfo: GameInfo,
+  ): Promise<void> {
+    if (gameInfo.type !== 'Game') {
+      event.dismiss();
+      return;
+    }
+
+    if (gameInfo.processInfo?.isElevated !== true) {
+      event.inject();
+      return;
+    }
+
+    this.log(
+      'Game Launched - Elevated Process Detected',
+      gameInfo.name,
+      'Checking high elevation helper.',
+    );
+
+    const helperInstalled =
+      await this.utilityService.isHighElevationHelperInstalled(true);
+
+    if (helperInstalled) {
+      this.log(
+        `High elevation helper installed. Injecting into elevated game "${gameInfo.name ?? 'Unknown Game'}".`,
+      );
+      event.inject();
+      return;
+    }
+
+    const installed = await this.utilityService.installHighElevationHelper();
+    if (installed) {
+      this.log(
+        `High elevation helper installed successfully. Injecting into "${gameInfo.name}".`,
+      );
+      event.inject();
+      return;
+    }
+
+    this.log(
+      `High elevation helper install did not complete. Skipping injection into "${gameInfo.name}".`,
+    );
+    event.dismiss();
   }
 }

@@ -14,14 +14,11 @@ const X264EncoderSettings: FC = () => {
     useContext(AppContext)?.recording;
 
   const onVideoEncoderSettingChanged = (e: ChangeEvent) => {
-    let { value, name, checked } = e.target as any;
-    let videoEncoderSettings = captureSettings.videoEncoderSettings;
-    videoEncoderSettings[name] = checked ? checked : value;
-    setCaptureSettings({
-      ...captureSettings,
-      videoEncoderSettings,
-    });
-
+    let { value, name, checked, type } = e.target as any;
+    let videoEncoderSettings = {
+      ...captureSettings.videoEncoderSettings,
+      [name]: type === 'checkbox' ? checked : value,
+    };
     setCaptureSettings({ ...captureSettings, videoEncoderSettings });
   };
 
@@ -49,6 +46,7 @@ const X264EncoderSettings: FC = () => {
           id="useBufferSize"
           labelText="Use buffer size"
           checked={vidEncSettings?.use_bufsize ?? false}
+          name="use_bufsize"
           onChange={onVideoEncoderSettingChanged}
         />
       </div>

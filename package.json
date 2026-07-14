@@ -1,7 +1,7 @@
 {
-  "name": "ow-electron-sample-official",
+  "name": "overwolf-official-sample-app",
   "version": "1.0.0",
-  "description": "ow-electron package sample app",
+  "description": "overwolf-official-sample-app",
   "main": "dist/browser/index.js",
   "author": "Overwolf Ltd.",
   "license": "MIT",
@@ -53,9 +53,9 @@
     "build:main": "webpack --config ./webpack.main.config.js",
     "build": "yarn webpack --mode=development && yarn build:main && yarn build:renderer",
     "build:dev": "yarn webpack --watch --mode=development",
-    "build:start": "yarn run build && ow-electron . ",
-    "start-ad": "ow-electron --test-ad." ,
-    "build:ow-electron": "ow-electron-builder --c.extraMetadata.name='overwolf-official-sample-app' --publish=never"
+    "build:start": "yarn run build && ow-electron .",
+    "start-ad": "yarn run ow-electron --test-ad .",
+    "build:ow-electron": "dotenv --override --no-expand -- ow-electron-builder --publish=never"
   },
   "devDependencies": {
     "@overwolf/ow-electron": "latest",
@@ -64,7 +64,6 @@
     "@types/node": "^18.11.18",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "electron": "^29.1.6",
     "html-webpack-plugin": "^5.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

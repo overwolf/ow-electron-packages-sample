@@ -1,13 +1,12 @@
-import React, { FC, useContext, useEffect, useState } from 'react';
+import React, { FC, useContext, useState } from 'react';
 import AppContext from '../context/app-context';
 import { GepActions } from '../api-actions/gep-actions';
 import { AppActions } from '../api-actions/app-actions';
 import { OsrActions } from '../api-actions/osr-actions';
-import { NavLink } from 'react-router-dom';
 
-// -----------------------------------------------------------------------------
 const TopButtons: FC = () => {
   const { newLogMessage } = useContext(AppContext)?.logs;
+  const [trackedClassId, setTrackedClassId] = useState('25322');
 
   const setRequiredFeaturesClicked = async () => {
     try {
@@ -53,19 +52,30 @@ const TopButtons: FC = () => {
     }
   };
 
-  const updateHotkeyClicked = async () => {
-    try {
-      await OsrActions.updateHotkey();
-    } catch (error) {
-      newLogMessage('Update hotkey Error');
-    }
-  };
-
   const scanGamesClicked = async () => {
     try {
       await AppActions.scanGames();
     } catch (error) {
       newLogMessage(`scan games ${error}`);
+    }
+  };
+
+  const trackSpecificClassIdClicked = async () => {
+    const classId = Number.parseInt(trackedClassId, 10);
+
+    if (Number.isNaN(classId)) {
+      newLogMessage('track specific classId requires a numeric value');
+      return;
+    }
+
+    try {
+      const result = await AppActions.trackGames(classId);
+      const formattedResult =
+        typeof result === 'string' ? result : JSON.stringify(result);
+      newLogMessage(`tracking utility events for classId ${classId}`);
+      newLogMessage(formattedResult);
+    } catch (error) {
+      newLogMessage(`track specific classId ${error}`);
     }
   };
 
@@ -77,6 +87,14 @@ const TopButtons: FC = () => {
     }
   };
 
+  const disableAdsOptimization = async () => {
+    try {
+      await AppActions.disableAdsOptimization();
+    } catch (error) {
+      newLogMessage(`disableAdsOptimization ${error}`);
+    }
+  };
+
   const hasPendingUpdates = async () => {
     try {
       await AppActions.checkForPendingUpdates();
@@ -85,13 +103,23 @@ const TopButtons: FC = () => {
     }
   };
 
+  const getUtmParams = async () => {
+    try {
+      const result = await AppActions.utmParams();
+      newLogMessage(`utmParams: ${result}`);
+    } catch (error) {
+      newLogMessage(`utmParams ${error}`);
+    }
+  };
+
   return (
-    <>
-      <table className="span12">
+    <div className="top-buttons-panel">
+      <table className="span12 top-buttons-table">
         <tbody>
           <tr>
             <td className="span1 btn">
               <button
+                className="btn-secondary"
                 onClick={setRequiredFeaturesClicked}
                 id="setRequiredFeaturesBtn"
               >
@@ -99,53 +127,80 @@ const TopButtons: FC = () => {
               </button>
             </td>
             <td className="span1 btn">
-              <button onClick={getInfoClicked} id="getInfoBtn">
+              <button className="btn-secondary" onClick={getInfoClicked} id="getInfoBtn">
                 getInfo
               </button>
             </td>
             <td className="span1 btn">
-              <button onClick={createOSRClicked} id="createOSR">
+              <button className="btn-secondary" onClick={createOSRClicked} id="createOSR">
                 Create OSR
               </button>
             </td>
             <td className="span1 btn">
-              <button onClick={createDPIOSRClicked} id="createDPIOSR">
+              <button className="btn-secondary" onClick={createDPIOSRClicked} id="createDPIOSR">
                 Create DPI OSR
               </button>
             </td>
             <td className="span1 btn">
-              <button onClick={showAllOSRClicked} id="visibilityOSR">
+              <button className="btn-secondary" onClick={showAllOSRClicked} id="visibilityOSR">
                 Show all OSR
               </button>
             </td>
           </tr>
           <tr>
-            <td className="span1 btn">
-              <button onClick={updateHotkeyClicked} id="updateHotkey">
-                update Hotkey
-              </button>
-            </td>
-            <td className="span1 btn">
-              <button onClick={scanGamesClicked} id="scanGameskey">
-                Scan Games
-              </button>
-            </td>
           </tr>
           <tr>
             <td className="span1 btn">
-              <button onClick={disableAdsFPD} id="disableAdsFPD">
+              <div className="top-buttons-track-group">
+                <input
+                  id="trackSpecificClassId"
+                  type="number"
+                  value={trackedClassId}
+                  onChange={(event) => setTrackedClassId(event.target.value)}
+                  placeholder="classId"
+                />
+                <button
+                  className="btn-secondary"
+                  onClick={trackSpecificClassIdClicked}
+                  id="trackSpecificClassIdButton"
+                >
+                  Track classId
+                </button>
+              </div>
+            </td>
+            <td className="span1 btn">
+              <button className="btn-secondary" onClick={disableAdsFPD} id="disableAdsFPD">
                 disableAdsFPD
               </button>
             </td>
             <td className="span1 btn">
-              <button onClick={hasPendingUpdates} id="hasPendingUpdates">
+              <button
+                className="btn-secondary"
+                onClick={disableAdsOptimization}
+                id="disableAdsOptimization"
+              >
+                disableAdsOptimization
+              </button>
+            </td>
+            <td className="span1 btn">
+              <button className="btn-secondary" onClick={hasPendingUpdates} id="hasPendingUpdates">
                 hasPendingUpdates
+              </button>
+            </td>
+            <td className="span1 btn">
+              <button className="btn-secondary" onClick={scanGamesClicked} id="scanGameskey">
+                Scan Games
+              </button>
+            </td>
+            <td className="span1 btn">
+              <button className="btn-secondary" onClick={getUtmParams} id="getUtmParams">
+                utmParams
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-    </>
+    </div>
   );
 };
 

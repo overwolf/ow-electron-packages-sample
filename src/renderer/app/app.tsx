@@ -4,13 +4,13 @@ import TopButtons from './components/top-buttons';
 
 function App() {
   return (
-    <>
+    <div className="app-page">
       <LogView />
 
       {/* QA */}
       <TopButtons />
       {/* QA */}
-    </>
+    </div>
   );
 }
 

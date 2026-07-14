@@ -41,9 +41,22 @@ export const GepLogsProvider: React.FC<{ children: React.ReactNode }> = ({ child
     ipcRenderer.on('gep-info', onGepInfo);
     ipcRenderer.on('gep-event', onGepEvent);
 
+    const onKeyDown = (event: KeyboardEvent) => {
+      addLog(`keydown  key='${event.key}' | code='${event.code}'`);
+    };
+
+    const onKeyUp = (event: KeyboardEvent) => {
+      addLog(`keyup  key='${event.key}' | code='${event.code}'`);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+
     return () => {
       ipcRenderer.removeListener('gep-info', onGepInfo);
       ipcRenderer.removeListener('gep-event', onGepEvent);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
     };
   }, [addLog]);
 
